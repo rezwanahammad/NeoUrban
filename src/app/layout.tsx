@@ -27,6 +27,7 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased flex h-screen bg-gray-50 text-gray-900`}
+        suppressHydrationWarning={true}
       >
         {/* Sidebar */}
         <aside className="w-64 bg-slate-800 text-white p-6 flex flex-col shadow-lg">
