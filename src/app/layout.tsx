@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NeoUrban Dashboard",
+  title: "NeoUrban",
   description: "A Smart City Services Management System",
 };
 
@@ -56,9 +56,6 @@ export default function RootLayout({
             </Link>
             <Link href="/utilities" className="block hover:text-blue-400">
               Utilities
-            </Link>
-            <Link href="/events" className="block hover:text-blue-400">
-              Events
             </Link>
           </nav>
         </aside>
