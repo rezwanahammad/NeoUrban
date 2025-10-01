@@ -1,18 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  Legend,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-} from "recharts";
+import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 
 // Types
 type Citizen = {
@@ -23,10 +12,28 @@ type Citizen = {
 };
 type Ticket = {
   ticket_id: number;
-  citizen_id: number;
-  transport_id: number;
+  citizen_name: string;
+  transport_type: string;
+  route: string;
   fare: number | string;
   booking_date: string;
+};
+type Request = {
+  request_id: number;
+  citizen_name: string;
+  service_name: string;
+  category: string;
+  status: string;
+  priority: string;
+  request_date: string;
+};
+type Bill = {
+  bill_id: number;
+  citizen: string;
+  utility: string;
+  amount: number | string;
+  due_date: string;
+  payment_status: string;
 };
 type RequestStatus = { status: string; count: number };
 type BillTrend = { month: string; total: number };
@@ -34,17 +41,34 @@ type BillTrend = { month: string; total: number };
 export default function Dashboard() {
   const [citizens, setCitizens] = useState<Citizen[]>([]);
   const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [requests, setRequests] = useState<RequestStatus[]>([]);
-  const [bills, setBills] = useState<BillTrend[]>([]);
+  const [requests, setRequests] = useState<Request[]>([]);
+  const [bills, setBills] = useState<Bill[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+
+  // Helper function to format fare
+  const formatFare = (fare: number | string) => {
+    const numFare = typeof fare === "string" ? parseFloat(fare) : fare;
+    return `$${numFare.toFixed(2)}`;
+  };
+
+  // Helper function to get request status data for chart
+  const getRequestStatusData = () => {
+    const statusCounts = requests.reduce((acc, request) => {
+      acc[request.status] = (acc[request.status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return Object.entries(statusCounts).map(([status, count]) => ({
+      status,
+      count,
+    }));
+  };
 
   // Fetch all data
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        setError(null);
 
         // Fetch citizens
         const citizensResponse = await fetch("/api/citizens");
@@ -66,7 +90,7 @@ export default function Dashboard() {
 
         // Fetch requests (when API is ready)
         try {
-          const requestsResponse = await fetch("/api/requests/status");
+          const requestsResponse = await fetch("/api/requests");
           if (requestsResponse.ok) {
             const requestsData = await requestsResponse.json();
             setRequests(requestsData);
@@ -77,7 +101,7 @@ export default function Dashboard() {
 
         // Fetch bills (when API is ready)
         try {
-          const billsResponse = await fetch("/api/bills/trends");
+          const billsResponse = await fetch("/api/bills");
           if (billsResponse.ok) {
             const billsData = await billsResponse.json();
             setBills(billsData);
@@ -86,7 +110,6 @@ export default function Dashboard() {
           console.log("Bills API not available yet");
         }
       } catch (err) {
-        setError("Failed to fetch data");
         console.error("Error fetching dashboard data:", err);
       } finally {
         setLoading(false);
@@ -98,12 +121,6 @@ export default function Dashboard() {
 
   // Colors for charts
   const COLORS = ["#0088FE", "#FFBB28", "#00C49F"];
-
-  // Helper function to format fare
-  const formatFare = (fare: number | string) => {
-    const numFare = typeof fare === "string" ? parseFloat(fare) : fare;
-    return `$${numFare.toFixed(2)}`;
-  };
 
   return (
     <div className="space-y-6">
@@ -138,7 +155,7 @@ export default function Dashboard() {
             <div className="animate-pulse h-8 bg-gray-200 rounded mb-2"></div>
           ) : (
             <p className="text-3xl font-bold text-green-600">
-              {requests.reduce((sum, r) => sum + r.count, 0) || 0}
+              {requests.length}
             </p>
           )}
           <p className="text-xs text-gray-400 mt-1">Service requests</p>
@@ -153,7 +170,13 @@ export default function Dashboard() {
             <p className="text-3xl font-bold text-purple-600">
               $
               {(
-                bills.reduce((sum, b) => sum + b.total, 0) || 0
+                bills.reduce((sum, b) => {
+                  const amount =
+                    typeof b.amount === "string"
+                      ? parseFloat(b.amount)
+                      : b.amount;
+                  return sum + amount;
+                }, 0) || 0
               ).toLocaleString()}
             </p>
           )}
@@ -254,7 +277,7 @@ export default function Dashboard() {
             ) : requests.length > 0 ? (
               <PieChart width={280} height={280}>
                 <Pie
-                  data={requests}
+                  data={getRequestStatusData()}
                   cx="50%"
                   cy="50%"
                   outerRadius={100}
@@ -262,7 +285,7 @@ export default function Dashboard() {
                   labelLine={false}
                   label={({ status, count }) => `${status}: ${count}`}
                 >
-                  {requests.map((entry, index) => (
+                  {getRequestStatusData().map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
                       fill={COLORS[index % COLORS.length]}
@@ -325,10 +348,10 @@ export default function Dashboard() {
                         {t.ticket_id}
                       </td>
                       <td className="p-3 text-sm text-gray-900">
-                        {t.citizen_id}
+                        {t.citizen_name}
                       </td>
                       <td className="p-3 text-sm text-gray-900">
-                        {t.transport_id}
+                        {t.transport_type} - {t.route}
                       </td>
                       <td className="p-3 text-sm font-semibold text-green-600">
                         {formatFare(t.fare)}
@@ -346,30 +369,52 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Bill Trends Chart */}
+        {/* Recent Bills Summary */}
         <div className="bg-white p-6 shadow-lg rounded-lg border border-gray-200">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Bill Trends</h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Recent Bills</h2>
           {loading ? (
             <div className="flex justify-center items-center h-64">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
             </div>
           ) : bills.length > 0 ? (
-            <LineChart width={400} height={250} data={bills}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
-              <Line
-                type="monotone"
-                dataKey="total"
-                stroke="#0088FE"
-                strokeWidth={2}
-              />
-            </LineChart>
+            <div className="space-y-4">
+              {bills.slice(0, 3).map((bill, index) => (
+                <div
+                  key={bill.bill_id}
+                  className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
+                >
+                  <div>
+                    <p className="font-semibold text-gray-800">
+                      {bill.citizen}
+                    </p>
+                    <p className="text-sm text-gray-600">{bill.utility}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-green-600">
+                      {formatFare(bill.amount)}
+                    </p>
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full ${
+                        bill.payment_status === "Paid"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {bill.payment_status}
+                    </span>
+                  </div>
+                </div>
+              ))}
+              <div className="text-center pt-2">
+                <p className="text-sm text-gray-500">
+                  Total: {bills.length} bills
+                </p>
+              </div>
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-64 text-gray-500">
               <p className="text-lg mb-2">No billing data available</p>
-              <p className="text-sm">Bills API will be added later</p>
+              <p className="text-sm">Bills will appear here when available</p>
             </div>
           )}
         </div>
