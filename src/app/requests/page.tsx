@@ -1,28 +1,29 @@
 "use client";
 import { useEffect, useState } from "react";
 
-type Bill = {
-  bill_id: number;
-  citizen: string;
-  utility: string;
-  amount: number | string;
-  due_date: string;
-  payment_status: "Paid" | "Unpaid";
+type Request = {
+  request_id: number;
+  citizen_name: string;
+  service_name: string;
+  category: "Waste" | "Electricity" | "Water" | "Transport" | "Healthcare";
+  status: "Pending" | "In Progress" | "Completed";
+  priority: "Low" | "Medium" | "High";
+  request_date: string;
 };
 
-export default function BillsPage() {
-  const [bills, setBills] = useState<Bill[]>([]);
+export default function RequestsPage() {
+  const [requests, setRequests] = useState<Request[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/bills")
+    fetch("/api/requests")
       .then((res) => {
         if (res.ok) return res.json();
-        throw new Error("Failed to fetch bills");
+        throw new Error("Failed to fetch requests");
       })
       .then((data) => {
-        setBills(data);
+        setRequests(data);
         setLoading(false);
       })
       .catch((err) => {
@@ -33,10 +34,42 @@ export default function BillsPage() {
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case "paid":
+      case "completed":
         return "bg-green-100 text-green-800";
-      case "unpaid":
+      case "in progress":
+        return "bg-blue-100 text-blue-800";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority.toLowerCase()) {
+      case "high":
         return "bg-red-100 text-red-800";
+      case "medium":
+        return "bg-yellow-100 text-yellow-800";
+      case "low":
+        return "bg-green-100 text-green-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getCategoryColor = (category: string) => {
+    switch (category.toLowerCase()) {
+      case "waste":
+        return "bg-orange-100 text-orange-800";
+      case "electricity":
+        return "bg-yellow-100 text-yellow-800";
+      case "water":
+        return "bg-blue-100 text-blue-800";
+      case "transport":
+        return "bg-purple-100 text-purple-800";
+      case "healthcare":
+        return "bg-pink-100 text-pink-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -44,11 +77,6 @@ export default function BillsPage() {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
-  };
-
-  const formatAmount = (amount: number | string) => {
-    const numAmount = typeof amount === "string" ? parseFloat(amount) : amount;
-    return `$${numAmount.toFixed(2)}`;
   };
 
   if (loading) {
@@ -62,7 +90,7 @@ export default function BillsPage() {
   if (error) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-800">Error loading bills: {error}</p>
+        <p className="text-red-800">Error loading requests: {error}</p>
       </div>
     );
   }
@@ -71,24 +99,28 @@ export default function BillsPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Bills</h1>
-        <p className="text-gray-600">Manage utility bills and payment status</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          Service Requests
+        </h1>
+        <p className="text-gray-600">
+          Manage citizen service requests and their status
+        </p>
       </div>
 
-      {/* Bills Table */}
+      {/* Requests Table */}
       <div className="bg-white p-6 shadow-lg rounded-lg border border-gray-200">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-gray-800">All Bills</h2>
+          <h2 className="text-xl font-bold text-gray-800">All Requests</h2>
           <span className="text-sm text-gray-500">
-            Total: {bills.length} bills
+            Total: {requests.length} requests
           </span>
         </div>
 
-        {bills.length === 0 ? (
+        {requests.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
-            <p className="text-lg mb-2">No bills found</p>
+            <p className="text-lg mb-2">No requests found</p>
             <p className="text-sm">
-              Bills will appear here when data is available
+              Service requests will appear here when data is available
             </p>
           </div>
         ) : (
@@ -97,56 +129,74 @@ export default function BillsPage() {
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
                   <th className="p-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Bill ID
+                    ID
                   </th>
                   <th className="p-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Citizen
                   </th>
                   <th className="p-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Utility
+                    Service
                   </th>
                   <th className="p-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Amount
+                    Category
                   </th>
                   <th className="p-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Due Date
+                    Priority
                   </th>
                   <th className="p-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
+                  <th className="p-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Date
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {bills.map((bill, index) => (
+                {requests.map((request, index) => (
                   <tr
-                    key={bill.bill_id}
+                    key={request.request_id}
                     className={`hover:bg-gray-50 ${
                       index % 2 === 0 ? "bg-white" : "bg-gray-25"
                     }`}
                   >
                     <td className="p-4 text-sm font-medium text-gray-900">
-                      {bill.bill_id}
+                      {request.request_id}
                     </td>
                     <td className="p-4 text-sm text-gray-900">
-                      {bill.citizen}
+                      {request.citizen_name}
                     </td>
                     <td className="p-4 text-sm text-gray-900">
-                      <span className="capitalize">{bill.utility}</span>
-                    </td>
-                    <td className="p-4 text-sm font-semibold text-green-600">
-                      {formatAmount(bill.amount)}
-                    </td>
-                    <td className="p-4 text-sm text-gray-900">
-                      {formatDate(bill.due_date)}
+                      {request.service_name}
                     </td>
                     <td className="p-4 text-sm">
                       <span
-                        className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                          bill.payment_status
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getCategoryColor(
+                          request.category
                         )}`}
                       >
-                        {bill.payment_status}
+                        {request.category}
                       </span>
+                    </td>
+                    <td className="p-4 text-sm">
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(
+                          request.priority
+                        )}`}
+                      >
+                        {request.priority}
+                      </span>
+                    </td>
+                    <td className="p-4 text-sm">
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                          request.status
+                        )}`}
+                      >
+                        {request.status}
+                      </span>
+                    </td>
+                    <td className="p-4 text-sm text-gray-900">
+                      {formatDate(request.request_date)}
                     </td>
                   </tr>
                 ))}
@@ -160,48 +210,41 @@ export default function BillsPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Total Bills
+            Total Requests
           </h3>
-          <p className="text-2xl font-bold text-blue-600">{bills.length}</p>
+          <p className="text-2xl font-bold text-blue-600">{requests.length}</p>
         </div>
         <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Paid
+            Pending
+          </h3>
+          <p className="text-2xl font-bold text-yellow-600">
+            {
+              requests.filter((r) => r.status.toLowerCase() === "pending")
+                .length
+            }
+          </p>
+        </div>
+        <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
+          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+            In Progress
+          </h3>
+          <p className="text-2xl font-bold text-blue-600">
+            {
+              requests.filter((r) => r.status.toLowerCase() === "in progress")
+                .length
+            }
+          </p>
+        </div>
+        <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
+          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+            Completed
           </h3>
           <p className="text-2xl font-bold text-green-600">
             {
-              bills.filter((b) => b.payment_status.toLowerCase() === "paid")
+              requests.filter((r) => r.status.toLowerCase() === "completed")
                 .length
             }
-          </p>
-        </div>
-        <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Unpaid
-          </h3>
-          <p className="text-2xl font-bold text-red-600">
-            {
-              bills.filter((b) => b.payment_status.toLowerCase() === "unpaid")
-                .length
-            }
-          </p>
-        </div>
-        <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Total Amount
-          </h3>
-          <p className="text-2xl font-bold text-purple-600">
-            $
-            {bills
-              .reduce(
-                (sum, b) =>
-                  sum +
-                  (typeof b.amount === "string"
-                    ? parseFloat(b.amount)
-                    : b.amount),
-                0
-              )
-              .toFixed(2)}
           </p>
         </div>
       </div>

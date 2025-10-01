@@ -25,7 +25,7 @@ type Ticket = {
   ticket_id: number;
   citizen_id: number;
   transport_id: number;
-  fare: number;
+  fare: number | string;
   booking_date: string;
 };
 type RequestStatus = { status: string; count: number };
@@ -98,6 +98,12 @@ export default function Dashboard() {
 
   // Colors for charts
   const COLORS = ["#0088FE", "#FFBB28", "#00C49F"];
+
+  // Helper function to format fare
+  const formatFare = (fare: number | string) => {
+    const numFare = typeof fare === "string" ? parseFloat(fare) : fare;
+    return `$${numFare.toFixed(2)}`;
+  };
 
   return (
     <div className="space-y-6">
@@ -325,7 +331,7 @@ export default function Dashboard() {
                         {t.transport_id}
                       </td>
                       <td className="p-3 text-sm font-semibold text-green-600">
-                        ${t.fare.toFixed(2)}
+                        {formatFare(t.fare)}
                       </td>
                     </tr>
                   ))}
