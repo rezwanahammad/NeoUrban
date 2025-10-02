@@ -48,6 +48,9 @@ export default function RootLayout({
             <Link href="/transport" className="block hover:text-blue-400">
               Transport
             </Link>
+            <Link href="/tickets" className="block hover:text-blue-400">
+              Tickets
+            </Link>
             <Link href="/healthcare" className="block hover:text-blue-400">
               Healthcare
             </Link>

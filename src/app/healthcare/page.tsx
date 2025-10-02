@@ -86,7 +86,7 @@ export default function HealthcarePage() {
             Healthcare Facilities
           </h2>
           <span className="text-sm text-gray-500">
-            Total: {healthcare.length} facilities
+            Total: {healthcare.length} hospitals
           </span>
         </div>
 
@@ -173,7 +173,7 @@ export default function HealthcarePage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Total Facilities
+            Total Hospitals
           </h3>
           <p className="text-2xl font-bold text-blue-600">
             {healthcare.length}
@@ -189,7 +189,7 @@ export default function HealthcarePage() {
         </div>
         <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Medium Facilities
+            Medium Hospitals
           </h3>
           <p className="text-2xl font-bold text-yellow-600">
             {
@@ -200,7 +200,7 @@ export default function HealthcarePage() {
         </div>
         <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Small Clinics
+            Small Hospitals
           </h3>
           <p className="text-2xl font-bold text-blue-600">
             {healthcare.filter((h) => h.capacity < 150).length}
