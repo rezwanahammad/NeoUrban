@@ -53,10 +53,11 @@ export default function Dashboard() {
 
   // Helper function to get request status data for chart
   const getRequestStatusData = () => {
-    const statusCounts = requests.reduce((acc, request) => {
-      acc[request.status] = (acc[request.status] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const statusCounts =
+      requests?.reduce((acc, request) => {
+        acc[request.status] = (acc[request.status] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>) || {};
 
     return Object.entries(statusCounts).map(([status, count]) => ({
       status,
@@ -82,7 +83,7 @@ export default function Dashboard() {
           const ticketsResponse = await fetch("/api/tickets");
           if (ticketsResponse.ok) {
             const ticketsData = await ticketsResponse.json();
-            setTickets(ticketsData.slice(0, 5));
+            setTickets(ticketsData.tickets?.slice(0, 5) || []);
           }
         } catch {
           console.log("Tickets API not available yet");
@@ -93,7 +94,7 @@ export default function Dashboard() {
           const requestsResponse = await fetch("/api/requests");
           if (requestsResponse.ok) {
             const requestsData = await requestsResponse.json();
-            setRequests(requestsData);
+            setRequests(requestsData.requests || []);
           }
         } catch {
           console.log("Requests API not available yet");
@@ -104,7 +105,7 @@ export default function Dashboard() {
           const billsResponse = await fetch("/api/bills");
           if (billsResponse.ok) {
             const billsData = await billsResponse.json();
-            setBills(billsData);
+            setBills(billsData.bills || []);
           }
         } catch {
           console.log("Bills API not available yet");
@@ -155,7 +156,7 @@ export default function Dashboard() {
             <div className="animate-pulse h-8 bg-gray-200 rounded mb-2"></div>
           ) : (
             <p className="text-3xl font-bold text-green-600">
-              {requests.length}
+              {requests?.length || 0}
             </p>
           )}
           <p className="text-xs text-gray-400 mt-1">Service requests</p>
@@ -170,7 +171,7 @@ export default function Dashboard() {
             <p className="text-3xl font-bold text-purple-600">
               $
               {(
-                bills.reduce((sum, b) => {
+                bills?.reduce((sum, b) => {
                   const amount =
                     typeof b.amount === "string"
                       ? parseFloat(b.amount)
@@ -190,7 +191,7 @@ export default function Dashboard() {
             <div className="animate-pulse h-8 bg-gray-200 rounded mb-2"></div>
           ) : (
             <p className="text-3xl font-bold text-orange-600">
-              {tickets.length}
+              {tickets?.length || 0}
             </p>
           )}
           <p className="text-xs text-gray-400 mt-1">Recent bookings</p>
@@ -274,7 +275,7 @@ export default function Dashboard() {
               <div className="flex justify-center items-center h-64">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
               </div>
-            ) : requests.length > 0 ? (
+            ) : requests?.length > 0 ? (
               <PieChart width={280} height={280}>
                 <Pie
                   data={getRequestStatusData()}
@@ -317,7 +318,7 @@ export default function Dashboard() {
             <div className="flex justify-center items-center h-32">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             </div>
-          ) : tickets.length > 0 ? (
+          ) : tickets?.length > 0 ? (
             <div className="overflow-hidden rounded-lg border border-gray-200">
               <table className="w-full">
                 <thead>
@@ -337,7 +338,7 @@ export default function Dashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {tickets.map((t, index) => (
+                  {tickets?.map((t, index) => (
                     <tr
                       key={t.ticket_id}
                       className={`hover:bg-gray-50 ${
@@ -376,9 +377,9 @@ export default function Dashboard() {
             <div className="flex justify-center items-center h-64">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
             </div>
-          ) : bills.length > 0 ? (
+          ) : bills?.length > 0 ? (
             <div className="space-y-4">
-              {bills.slice(0, 3).map((bill, index) => (
+              {bills?.slice(0, 3).map((bill, index) => (
                 <div
                   key={bill.bill_id}
                   className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
@@ -407,7 +408,7 @@ export default function Dashboard() {
               ))}
               <div className="text-center pt-2">
                 <p className="text-sm text-gray-500">
-                  Total: {bills.length} bills
+                  Total: {bills?.length || 0} bills
                 </p>
               </div>
             </div>

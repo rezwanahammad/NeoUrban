@@ -23,7 +23,7 @@ export default function RequestsPage() {
         throw new Error("Failed to fetch requests");
       })
       .then((data) => {
-        setRequests(data);
+        setRequests(data.requests || []);
         setLoading(false);
       })
       .catch((err) => {
@@ -112,11 +112,11 @@ export default function RequestsPage() {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold text-gray-800">All Requests</h2>
           <span className="text-sm text-gray-500">
-            Total: {requests.length} requests
+            Total: {requests?.length || 0} requests
           </span>
         </div>
 
-        {requests.length === 0 ? (
+        {(requests?.length || 0) === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <p className="text-lg mb-2">No requests found</p>
             <p className="text-sm">
@@ -152,7 +152,7 @@ export default function RequestsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {requests.map((request, index) => (
+                {requests?.map((request, index) => (
                   <tr
                     key={request.request_id}
                     className={`hover:bg-gray-50 ${
@@ -212,7 +212,9 @@ export default function RequestsPage() {
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
             Total Requests
           </h3>
-          <p className="text-2xl font-bold text-blue-600">{requests.length}</p>
+          <p className="text-2xl font-bold text-blue-600">
+            {requests?.length || 0}
+          </p>
         </div>
         <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
@@ -220,7 +222,7 @@ export default function RequestsPage() {
           </h3>
           <p className="text-2xl font-bold text-yellow-600">
             {
-              requests.filter((r) => r.status.toLowerCase() === "pending")
+              requests?.filter((r) => r.status.toLowerCase() === "pending")
                 .length
             }
           </p>
@@ -231,7 +233,7 @@ export default function RequestsPage() {
           </h3>
           <p className="text-2xl font-bold text-blue-600">
             {
-              requests.filter((r) => r.status.toLowerCase() === "in progress")
+              requests?.filter((r) => r.status.toLowerCase() === "in progress")
                 .length
             }
           </p>
@@ -242,7 +244,7 @@ export default function RequestsPage() {
           </h3>
           <p className="text-2xl font-bold text-green-600">
             {
-              requests.filter((r) => r.status.toLowerCase() === "completed")
+              requests?.filter((r) => r.status.toLowerCase() === "completed")
                 .length
             }
           </p>

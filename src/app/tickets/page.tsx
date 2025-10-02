@@ -10,10 +10,21 @@ type Ticket = {
   booking_date: string;
 };
 
+type TicketsData = {
+  tickets: Ticket[];
+  analytics: {
+    highSpenders: any[];
+    routePerformance: any[];
+    transportSummary: any[];
+    recentBookings: any[];
+  };
+};
+
 export default function TicketsPage() {
-  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [data, setData] = useState<TicketsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
     fetch("/api/tickets")
@@ -21,8 +32,8 @@ export default function TicketsPage() {
         if (res.ok) return res.json();
         throw new Error("Failed to fetch tickets data");
       })
-      .then((data) => {
-        setTickets(data);
+      .then((ticketsData) => {
+        setData(ticketsData);
         setLoading(false);
       })
       .catch((err) => {
@@ -31,39 +42,13 @@ export default function TicketsPage() {
       });
   }, []);
 
-  const getTransportTypeColor = (type: string) => {
-    switch (type.toLowerCase()) {
-      case "bus":
-        return "bg-blue-100 text-blue-800";
-      case "metro":
-        return "bg-green-100 text-green-800";
-      case "train":
-        return "bg-purple-100 text-purple-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getTransportIcon = (type: string) => {
-    switch (type.toLowerCase()) {
-      case "bus":
-        return "🚌";
-      case "metro":
-        return "🚇";
-      case "train":
-        return "🚆";
-      default:
-        return "🚌";
-    }
+  const formatFare = (fare: number | string) => {
+    const numFare = typeof fare === "string" ? parseFloat(fare) : fare;
+    return `$${numFare.toFixed(2)}`;
   };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
-  };
-
-  const formatFare = (fare: number | string) => {
-    const numFare = typeof fare === "string" ? parseFloat(fare) : fare;
-    return `$${numFare.toFixed(2)}`;
   };
 
   if (loading) {
@@ -86,365 +71,176 @@ export default function TicketsPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Transport Tickets
-        </h1>
-        <p className="text-gray-600">
-          Manage transportation ticket bookings and payments
-        </p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Transport Tickets</h1>
+        <p className="text-gray-600">SQL Analytics Dashboard</p>
       </div>
 
-      {/* Tickets Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {tickets.map((ticket) => (
-          <div
-            key={ticket.ticket_id}
-            className="bg-white p-6 shadow-lg rounded-lg border border-gray-200 hover:shadow-xl transition-shadow"
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center space-x-3">
-                <span className="text-2xl">
-                  {getTransportIcon(ticket.transport_type)}
-                </span>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900">
-                    Ticket #{ticket.ticket_id}
-                  </h3>
-                  <p className="text-sm text-gray-600">{ticket.citizen_name}</p>
-                </div>
-              </div>
-              <span
-                className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getTransportTypeColor(
-                  ticket.transport_type
-                )}`}
-              >
-                {ticket.transport_type}
-              </span>
+      {/* Navigation Tabs */}
+      <div className="mb-8">
+        <nav className="flex space-x-1 rounded-xl bg-blue-900/20 p-1">
+          {[
+            { id: "overview", label: "Overview" },
+            { id: "spenders", label: "High Spenders" },
+            { id: "routes", label: "Routes" },
+            { id: "analytics", label: "Analytics" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
+                activeTab === tab.id
+                  ? "bg-white text-blue-700 shadow"
+                  : "text-blue-100 hover:text-white hover:bg-white/[0.12]"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* Overview Tab */}
+      {activeTab === "overview" && (
+        <div className="space-y-6">
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white p-6 shadow rounded-lg text-center">
+              <h3 className="text-sm font-semibold text-gray-500 uppercase">Total Tickets</h3>
+              <p className="text-3xl font-bold text-blue-600 mt-2">{data?.tickets?.length || 0}</p>
             </div>
-
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Route:</span>
-                <span className="text-sm font-semibold text-gray-900">
-                  {ticket.route}
-                </span>
-              </div>
-
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Fare:</span>
-                <span className="text-lg font-bold text-green-600">
-                  {formatFare(ticket.fare)}
-                </span>
-              </div>
-
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-600">Booking Date:</span>
-                <span className="text-gray-900">
-                  {formatDate(ticket.booking_date)}
-                </span>
-              </div>
+            <div className="bg-white p-6 shadow rounded-lg text-center">
+              <h3 className="text-sm font-semibold text-gray-500 uppercase">Total Revenue</h3>
+              <p className="text-3xl font-bold text-green-600 mt-2">
+                {formatFare(
+                  data?.tickets?.reduce((sum, t) => {
+                    const fare = typeof t.fare === "string" ? parseFloat(t.fare) : t.fare;
+                    return sum + fare;
+                  }, 0) || 0
+                )}
+              </p>
             </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Tickets Table */}
-      <div className="bg-white p-6 shadow-lg rounded-lg border border-gray-200">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-gray-800">All Tickets</h2>
-          <span className="text-sm text-gray-500">
-            Total: {tickets.length} tickets
-          </span>
-        </div>
-
-        {tickets.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <p className="text-lg mb-2">No tickets found</p>
-            <p className="text-sm">
-              Transport tickets will appear here when data is available
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-hidden rounded-lg border border-gray-200">
-            <table className="min-w-full">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="p-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Ticket ID
-                  </th>
-                  <th className="p-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Citizen
-                  </th>
-                  <th className="p-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Transport
-                  </th>
-                  <th className="p-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Route
-                  </th>
-                  <th className="p-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Fare
-                  </th>
-                  <th className="p-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Booking Date
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {tickets.map((ticket, index) => (
-                  <tr
-                    key={ticket.ticket_id}
-                    className={`hover:bg-gray-50 ${
-                      index % 2 === 0 ? "bg-white" : "bg-gray-25"
-                    }`}
-                  >
-                    <td className="p-4 text-sm font-medium text-gray-900">
-                      #{ticket.ticket_id}
-                    </td>
-                    <td className="p-4 text-sm text-gray-900">
-                      {ticket.citizen_name}
-                    </td>
-                    <td className="p-4 text-sm">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-lg">
-                          {getTransportIcon(ticket.transport_type)}
-                        </span>
-                        <span
-                          className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getTransportTypeColor(
-                            ticket.transport_type
-                          )}`}
-                        >
-                          {ticket.transport_type}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="p-4 text-sm text-gray-900">
-                      {ticket.route}
-                    </td>
-                    <td className="p-4 text-sm font-bold text-green-600">
-                      {formatFare(ticket.fare)}
-                    </td>
-                    <td className="p-4 text-sm text-gray-900">
-                      {formatDate(ticket.booking_date)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Total Tickets
-          </h3>
-          <p className="text-2xl font-bold text-blue-600">{tickets.length}</p>
-        </div>
-        <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Bus Tickets 🚌
-          </h3>
-          <p className="text-2xl font-bold text-blue-600">
-            {
-              tickets.filter((t) => t.transport_type.toLowerCase() === "bus")
-                .length
-            }
-          </p>
-        </div>
-        <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Metro Tickets 🚇
-          </h3>
-          <p className="text-2xl font-bold text-green-600">
-            {
-              tickets.filter((t) => t.transport_type.toLowerCase() === "metro")
-                .length
-            }
-          </p>
-        </div>
-        <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Train Tickets 🚆
-          </h3>
-          <p className="text-2xl font-bold text-purple-600">
-            {
-              tickets.filter((t) => t.transport_type.toLowerCase() === "train")
-                .length
-            }
-          </p>
-        </div>
-      </div>
-
-      {/* Revenue Analysis */}
-      <div className="bg-white p-6 shadow-lg rounded-lg border border-gray-200">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">
-          Revenue Analysis
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center p-6 bg-green-50 rounded-lg">
-            <p className="text-3xl font-bold text-green-600">
-              {formatFare(
-                tickets.reduce((sum, t) => {
-                  const fare =
-                    typeof t.fare === "string" ? parseFloat(t.fare) : t.fare;
-                  return sum + fare;
-                }, 0)
-              )}
-            </p>
-            <p className="text-sm text-gray-600 mt-1">Total Revenue</p>
-            <p className="text-xs text-gray-500 mt-2">From all ticket sales</p>
-          </div>
-          <div className="text-center p-6 bg-blue-50 rounded-lg">
-            <p className="text-3xl font-bold text-blue-600">
-              {tickets.length > 0
-                ? formatFare(
-                    tickets.reduce((sum, t) => {
-                      const fare =
-                        typeof t.fare === "string"
-                          ? parseFloat(t.fare)
-                          : t.fare;
-                      return sum + fare;
-                    }, 0) / tickets.length
-                  )
-                : "$0.00"}
-            </p>
-            <p className="text-sm text-gray-600 mt-1">Average Fare</p>
-            <p className="text-xs text-gray-500 mt-2">Per ticket</p>
-          </div>
-          <div className="text-center p-6 bg-purple-50 rounded-lg">
-            <p className="text-3xl font-bold text-purple-600">
-              {tickets.length > 0
-                ? formatFare(
-                    Math.max(
-                      ...tickets.map((t) =>
-                        typeof t.fare === "string" ? parseFloat(t.fare) : t.fare
-                      )
+            <div className="bg-white p-6 shadow rounded-lg text-center">
+              <h3 className="text-sm font-semibold text-gray-500 uppercase">Average Fare</h3>
+              <p className="text-3xl font-bold text-purple-600 mt-2">
+                {(data?.tickets?.length || 0) > 0
+                  ? formatFare(
+                      (data?.tickets?.reduce((sum, t) => {
+                        const fare = typeof t.fare === "string" ? parseFloat(t.fare) : t.fare;
+                        return sum + fare;
+                      }, 0) || 0) / (data?.tickets?.length || 1)
                     )
-                  )
-                : "$0.00"}
-            </p>
-            <p className="text-sm text-gray-600 mt-1">Highest Fare</p>
-            <p className="text-xs text-gray-500 mt-2">Premium ticket</p>
+                  : "$0.00"}
+              </p>
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Transport Type Analysis */}
-      <div className="bg-white p-6 shadow-lg rounded-lg border border-gray-200">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">
-          Transport Type Breakdown
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from(new Set(tickets.map((t) => t.transport_type))).map(
-            (type) => {
-              const typeTickets = tickets.filter(
-                (t) => t.transport_type === type
-              );
-              const typeRevenue = typeTickets.reduce((sum, t) => {
-                const fare =
-                  typeof t.fare === "string" ? parseFloat(t.fare) : t.fare;
-                return sum + fare;
-              }, 0);
-
-              return (
-                <div
-                  key={type}
-                  className="p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border"
-                >
-                  <div className="flex items-center space-x-3 mb-3">
-                    <span className="text-2xl">{getTransportIcon(type)}</span>
-                    <h3 className="font-bold text-gray-800">{type}</h3>
+          {/* Recent Tickets */}
+          <div className="bg-white p-6 shadow rounded-lg">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">Recent Tickets</h2>
+            <div className="space-y-3">
+              {data?.tickets?.slice(0, 10).map((ticket) => (
+                <div key={ticket.ticket_id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                  <div>
+                    <h3 className="font-semibold">{ticket.citizen_name}</h3>
+                    <p className="text-sm text-gray-600">{ticket.route} ({ticket.transport_type})</p>
+                    <p className="text-xs text-gray-500">{formatDate(ticket.booking_date)}</p>
                   </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Tickets:</span>
-                      <span className="font-semibold">
-                        {typeTickets.length}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Revenue:</span>
-                      <span className="font-semibold text-green-600">
-                        {formatFare(typeRevenue)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Avg Fare:</span>
-                      <span className="font-semibold">
-                        {typeTickets.length > 0
-                          ? formatFare(typeRevenue / typeTickets.length)
-                          : "$0.00"}
-                      </span>
-                    </div>
+                  <div className="text-right">
+                    <p className="text-lg font-bold text-green-600">{formatFare(ticket.fare)}</p>
                   </div>
                 </div>
-              );
-            }
-          )}
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Recent Bookings */}
-      <div className="bg-white p-6 shadow-lg rounded-lg border border-gray-200">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">
-          Recent Bookings
-        </h2>
-        <div className="space-y-3">
-          {tickets
-            .sort(
-              (a, b) =>
-                new Date(b.booking_date).getTime() -
-                new Date(a.booking_date).getTime()
-            )
-            .slice(0, 5)
-            .map((ticket) => (
-              <div
-                key={ticket.ticket_id}
-                className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border border-blue-100"
-              >
-                <div className="flex items-center space-x-4">
-                  <div className="text-center bg-white p-2 rounded-lg shadow-sm">
-                    <span className="text-2xl">
-                      {getTransportIcon(ticket.transport_type)}
-                    </span>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">
-                      {ticket.citizen_name}
-                    </h3>
-                    <p className="text-sm text-gray-600">{ticket.route}</p>
-                    <p className="text-xs text-gray-500">
-                      {formatDate(ticket.booking_date)}
-                    </p>
-                  </div>
+      {/* High Spenders Tab */}
+      {activeTab === "spenders" && (
+        <div className="bg-white p-6 shadow rounded-lg">
+          <h2 className="text-xl font-bold mb-4">High Spenders</h2>
+          <p className="text-sm text-gray-600 mb-4">SQL: INNER JOIN + GROUP BY + HAVING</p>
+          <div className="space-y-3">
+            {data?.analytics?.highSpenders?.map((spender: any, index: number) => (
+              <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                <div>
+                  <h3 className="font-semibold">{spender.name}</h3>
+                  <p className="text-sm text-gray-600">{spender.ticket_count} tickets</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg font-bold text-green-600">
-                    {formatFare(ticket.fare)}
-                  </p>
-                  <span
-                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTransportTypeColor(
-                      ticket.transport_type
-                    )}`}
-                  >
-                    {ticket.transport_type}
-                  </span>
+                  <p className="font-bold text-green-600">{formatFare(spender.total_spent)}</p>
                 </div>
               </div>
             ))}
-        </div>
-
-        {tickets.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            <p className="text-lg mb-2">No recent bookings</p>
-            <p className="text-sm">
-              Recent ticket bookings will be displayed here
-            </p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Routes Tab */}
+      {activeTab === "routes" && (
+        <div className="bg-white p-6 shadow rounded-lg">
+          <h2 className="text-xl font-bold mb-4">Route Performance</h2>
+          <p className="text-sm text-gray-600 mb-4">SQL: LEFT OUTER JOIN + Aggregations (COUNT, SUM, AVG, MIN, MAX)</p>
+          <div className="space-y-3">
+            {data?.analytics?.routePerformance?.map((route: any, index: number) => (
+              <div key={index} className="p-3 bg-gray-50 rounded">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="font-semibold">{route.route} ({route.type})</h3>
+                    <p className="text-sm text-gray-600">{route.total_bookings} bookings</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-green-600">{formatFare(route.total_revenue || 0)}</p>
+                    <p className="text-sm text-gray-600">
+                      Range: {formatFare(route.min_fare || 0)} - {formatFare(route.max_fare || 0)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Analytics Tab */}
+      {activeTab === "analytics" && (
+        <div className="space-y-6">
+          <div className="bg-white p-6 shadow rounded-lg">
+            <h2 className="text-xl font-bold mb-4">Transport Summary</h2>
+            <p className="text-sm text-gray-600 mb-4">SQL: INNER JOIN + GROUP BY</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {data?.analytics?.transportSummary?.map((transport: any, index: number) => (
+                <div key={index} className="p-4 bg-gray-50 rounded">
+                  <h3 className="font-semibold text-lg">{transport.transport_type}</h3>
+                  <div className="mt-2 space-y-1">
+                    <p><span className="font-medium">Bookings:</span> {transport.total_bookings}</p>
+                    <p><span className="font-medium">Revenue:</span> {formatFare(transport.total_revenue || 0)}</p>
+                    <p><span className="font-medium">Average:</span> {formatFare(transport.avg_fare || 0)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white p-6 shadow rounded-lg">
+            <h2 className="text-xl font-bold mb-4">Recent Bookings</h2>
+            <p className="text-sm text-gray-600 mb-4">SQL: Subquery for date filtering</p>
+            <div className="space-y-2">
+              {data?.analytics?.recentBookings?.slice(0, 8).map((booking: any, index: number) => (
+                <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                  <div>
+                    <span className="font-medium">{booking.name}</span> - {booking.route} ({booking.type})
+                  </div>
+                  <div className="text-right">
+                    <span className="text-green-600">{formatFare(booking.fare)}</span>
+                    <p className="text-xs text-gray-500">{formatDate(booking.booking_date)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

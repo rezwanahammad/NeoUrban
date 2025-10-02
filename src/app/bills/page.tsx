@@ -22,7 +22,7 @@ export default function BillsPage() {
         throw new Error("Failed to fetch bills");
       })
       .then((data) => {
-        setBills(data);
+        setBills(data.bills || []);
         setLoading(false);
       })
       .catch((err) => {
@@ -80,11 +80,11 @@ export default function BillsPage() {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold text-gray-800">All Bills</h2>
           <span className="text-sm text-gray-500">
-            Total: {bills.length} bills
+            Total: {bills?.length || 0} bills
           </span>
         </div>
 
-        {bills.length === 0 ? (
+        {(bills?.length || 0) === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <p className="text-lg mb-2">No bills found</p>
             <p className="text-sm">
@@ -117,7 +117,7 @@ export default function BillsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {bills.map((bill, index) => (
+                {bills?.map((bill, index) => (
                   <tr
                     key={bill.bill_id}
                     className={`hover:bg-gray-50 ${
@@ -162,7 +162,9 @@ export default function BillsPage() {
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
             Total Bills
           </h3>
-          <p className="text-2xl font-bold text-blue-600">{bills.length}</p>
+          <p className="text-2xl font-bold text-blue-600">
+            {bills?.length || 0}
+          </p>
         </div>
         <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
@@ -170,7 +172,7 @@ export default function BillsPage() {
           </h3>
           <p className="text-2xl font-bold text-green-600">
             {
-              bills.filter((b) => b.payment_status.toLowerCase() === "paid")
+              bills?.filter((b) => b.payment_status.toLowerCase() === "paid")
                 .length
             }
           </p>
@@ -181,7 +183,7 @@ export default function BillsPage() {
           </h3>
           <p className="text-2xl font-bold text-red-600">
             {
-              bills.filter((b) => b.payment_status.toLowerCase() === "unpaid")
+              bills?.filter((b) => b.payment_status.toLowerCase() === "unpaid")
                 .length
             }
           </p>
