@@ -198,48 +198,6 @@ export default function UtilitiesPage() {
         )}
       </div>
 
-      {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Electricity ⚡
-          </h3>
-          <p className="text-2xl font-bold text-yellow-600">
-            {
-              utilities.filter((u) => u.type.toLowerCase() === "electricity")
-                .length
-            }
-          </p>
-        </div>
-        <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Water 💧
-          </h3>
-          <p className="text-2xl font-bold text-blue-600">
-            {utilities.filter((u) => u.type.toLowerCase() === "water").length}
-          </p>
-        </div>
-        <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Internet 🌐
-          </h3>
-          <p className="text-2xl font-bold text-purple-600">
-            {
-              utilities.filter((u) => u.type.toLowerCase() === "internet")
-                .length
-            }
-          </p>
-        </div>
-        <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Gas 🔥
-          </h3>
-          <p className="text-2xl font-bold text-red-600">
-            {utilities.filter((u) => u.type.toLowerCase() === "gas").length}
-          </p>
-        </div>
-      </div>
-
       {/* Provider Analysis */}
       <div className="bg-white p-6 shadow-lg rounded-lg border border-gray-200">
         <h2 className="text-xl font-bold text-gray-800 mb-4">
@@ -281,79 +239,6 @@ export default function UtilitiesPage() {
               );
             }
           )}
-        </div>
-      </div>
-
-      {/* Service Coverage */}
-      <div className="bg-white p-6 shadow-lg rounded-lg border border-gray-200">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">
-          Service Coverage
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-700">
-              Essential Services
-            </h3>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-                <span className="flex items-center space-x-2">
-                  <span>💧</span>
-                  <span>Water Supply</span>
-                </span>
-                <span className="font-semibold text-blue-600">
-                  {utilities.filter((u) => u.type === "Water").length} provider
-                  {utilities.filter((u) => u.type === "Water").length > 1
-                    ? "s"
-                    : ""}
-                </span>
-              </div>
-              <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
-                <span className="flex items-center space-x-2">
-                  <span>⚡</span>
-                  <span>Electricity</span>
-                </span>
-                <span className="font-semibold text-yellow-600">
-                  {utilities.filter((u) => u.type === "Electricity").length}{" "}
-                  provider
-                  {utilities.filter((u) => u.type === "Electricity").length > 1
-                    ? "s"
-                    : ""}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-700">
-              Additional Services
-            </h3>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
-                <span className="flex items-center space-x-2">
-                  <span>🌐</span>
-                  <span>Internet</span>
-                </span>
-                <span className="font-semibold text-purple-600">
-                  {utilities.filter((u) => u.type === "Internet").length}{" "}
-                  provider
-                  {utilities.filter((u) => u.type === "Internet").length > 1
-                    ? "s"
-                    : ""}
-                </span>
-              </div>
-              <div className="flex justify-between items-center p-3 bg-red-50 rounded-lg">
-                <span className="flex items-center space-x-2">
-                  <span>🔥</span>
-                  <span>Gas Supply</span>
-                </span>
-                <span className="font-semibold text-red-600">
-                  {utilities.filter((u) => u.type === "Gas").length} provider
-                  {utilities.filter((u) => u.type === "Gas").length > 1
-                    ? "s"
-                    : ""}
-                </span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>

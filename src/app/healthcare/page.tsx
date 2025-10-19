@@ -248,41 +248,6 @@ export default function HealthcarePage() {
           </div>
         </div>
       </div>
-
-      {/* Facilities by Location */}
-      <div className="bg-white p-6 shadow-lg rounded-lg border border-gray-200">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">
-          Facilities by Location
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from(new Set(healthcare.map((h) => h.location))).map(
-            (location) => {
-              const facilitiesInLocation = healthcare.filter(
-                (h) => h.location === location
-              );
-              const totalCapacity = facilitiesInLocation.reduce(
-                (sum, h) => sum + h.capacity,
-                0
-              );
-
-              return (
-                <div key={location} className="p-4 bg-gray-50 rounded-lg">
-                  <h3 className="font-semibold text-gray-800 mb-2">
-                    {location}
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    {facilitiesInLocation.length} facility
-                    {facilitiesInLocation.length > 1 ? "ies" : ""}
-                  </p>
-                  <p className="text-sm font-semibold text-blue-600">
-                    {totalCapacity.toLocaleString()} beds
-                  </p>
-                </div>
-              );
-            }
-          )}
-        </div>
-      </div>
     </div>
   );
 }

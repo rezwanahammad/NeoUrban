@@ -89,43 +89,6 @@ export default function ServicesPage() {
         </p>
       </div>
 
-      {/* Services Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {services.map((service) => (
-          <div
-            key={service.service_id}
-            className="bg-white p-6 shadow-lg rounded-lg border border-gray-200 hover:shadow-xl transition-shadow"
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center space-x-3">
-                <span className="text-2xl">
-                  {getCategoryIcon(service.category)}
-                </span>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900">
-                    {service.service_name}
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    ID: {service.service_id}
-                  </p>
-                </div>
-              </div>
-              <span
-                className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getCategoryColor(
-                  service.category
-                )}`}
-              >
-                {service.category}
-              </span>
-            </div>
-            <div className="border-t pt-4">
-              <p className="text-sm text-gray-600">Provider</p>
-              <p className="font-semibold text-gray-900">{service.provider}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
       {/* Services Table */}
       <div className="bg-white p-6 shadow-lg rounded-lg border border-gray-200">
         <div className="flex justify-between items-center mb-6">
@@ -249,46 +212,6 @@ export default function ServicesPage() {
                 .length
             }
           </p>
-        </div>
-      </div>
-
-      {/* Service Providers */}
-      <div className="bg-white p-6 shadow-lg rounded-lg border border-gray-200">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">
-          Service Providers
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from(new Set(services.map((s) => s.provider))).map(
-            (provider) => {
-              const providerServices = services.filter(
-                (s) => s.provider === provider
-              );
-
-              return (
-                <div key={provider} className="p-4 bg-gray-50 rounded-lg">
-                  <h3 className="font-semibold text-gray-800 mb-2">
-                    {provider}
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-2">
-                    {providerServices.length} service
-                    {providerServices.length > 1 ? "s" : ""}
-                  </p>
-                  <div className="flex flex-wrap gap-1">
-                    {providerServices.map((service) => (
-                      <span
-                        key={service.service_id}
-                        className={`inline-flex px-2 py-1 text-xs rounded-full ${getCategoryColor(
-                          service.category
-                        )}`}
-                      >
-                        {getCategoryIcon(service.category)} {service.category}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              );
-            }
-          )}
         </div>
       </div>
     </div>
