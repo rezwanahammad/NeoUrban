@@ -11,22 +11,37 @@ type Appointment = {
   status: "Scheduled" | "Completed" | "Cancelled";
 };
 
+type HospitalPerformance = {
+  hospital_name: string;
+  location: string;
+  total_appointments: number;
+  completed_appointments: number;
+  completion_rate: string;
+};
+
+type StatusSummary = {
+  status: string;
+  appointment_count: number;
+  percentage: string;
+};
+
+type RecentAppointment = {
+  appointment_id: number;
+  citizen_name: string;
+  hospital_name: string;
+  location: string;
+  doctor_name: string;
+  appointment_date: string;
+  status: string;
+  days_ago: number;
+};
+
 type AppointmentsData = {
   appointments: Appointment[];
   analytics: {
-    hospitalPerformance: {
-      hospital_name: string;
-      location: string;
-      total_appointments: number;
-      completed_appointments: number;
-      completion_rate: string;
-    }[];
-    statusSummary: {
-      status: string;
-      appointment_count: number;
-      percentage: string;
-    }[];
-    recentAppointments: Appointment[];
+    hospitalPerformance: HospitalPerformance[];
+    statusSummary: StatusSummary[];
+    recentAppointments: RecentAppointment[];
   };
 };
 
@@ -34,7 +49,6 @@ export default function AppointmentsPage() {
   const [data, setData] = useState<AppointmentsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
     fetch("/api/appointments")
@@ -56,14 +70,9 @@ export default function AppointmentsPage() {
     return new Date(dateString).toLocaleDateString();
   };
 
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  const getStatusColor = (status: string | null | undefined) => {
+    if (!status) return "bg-gray-100 text-gray-800";
 
-  const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "completed":
         return "bg-green-100 text-green-800";
@@ -73,19 +82,6 @@ export default function AppointmentsPage() {
         return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "completed":
-        return "✅";
-      case "scheduled":
-        return "📅";
-      case "cancelled":
-        return "❌";
-      default:
-        return "📋";
     }
   };
 
@@ -100,7 +96,7 @@ export default function AppointmentsPage() {
   if (error) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-800">Error loading appointments data: {error}</p>
+        <p className="text-red-800">Error loading appointments: {error}</p>
       </div>
     );
   }
@@ -110,318 +106,487 @@ export default function AppointmentsPage() {
       {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Healthcare Appointments
+          🏥 Medical Appointments
         </h1>
-        <p className="text-gray-600">
-          SQL Analytics Dashboard for Medical Appointments
+        <p className="text-gray-600">SQL Query Results from Appointments API</p>
+      </div>
+
+      {/* All Appointments Section - Main Query */}
+      <div className="bg-white p-6 shadow-lg rounded-lg">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          🏥 All Medical Appointments (Main Query)
+        </h2>
+        <p className="text-sm text-gray-600 mb-4">
+          <strong>SQL Used:</strong> INNER JOIN + Window Functions
         </p>
-      </div>
 
-      {/* Navigation Tabs */}
-      <div className="mb-8">
-        <nav className="flex space-x-1 rounded-xl bg-blue-900/20 p-1">
-          {[
-            { id: "overview", label: "Overview" },
-            { id: "hospitals", label: "Hospitals" },
-            { id: "status", label: "Status" },
-            { id: "analytics", label: "Analytics" },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
-                activeTab === tab.id
-                  ? "bg-white text-blue-700 shadow"
-                  : "text-blue-100 hover:text-white hover:bg-white/[0.12]"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-      </div>
-
-      {/* Overview Tab */}
-      {activeTab === "overview" && (
-        <div className="space-y-6">
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white p-6 shadow rounded-lg text-center">
-              <h3 className="text-sm font-semibold text-gray-500 uppercase">
-                Total Appointments
-              </h3>
-              <p className="text-3xl font-bold text-blue-600 mt-2">
-                {data?.appointments?.length || 0}
-              </p>
-            </div>
-            <div className="bg-white p-6 shadow rounded-lg text-center">
-              <h3 className="text-sm font-semibold text-gray-500 uppercase">
-                Completed
-              </h3>
-              <p className="text-3xl font-bold text-green-600 mt-2">
-                {data?.appointments?.filter(
-                  (a) => a.status.toLowerCase() === "completed"
-                ).length || 0}
-              </p>
-            </div>
-            <div className="bg-white p-6 shadow rounded-lg text-center">
-              <h3 className="text-sm font-semibold text-gray-500 uppercase">
-                Scheduled
-              </h3>
-              <p className="text-3xl font-bold text-purple-600 mt-2">
-                {data?.appointments?.filter(
-                  (a) => a.status.toLowerCase() === "scheduled"
-                ).length || 0}
-              </p>
-            </div>
-          </div>
-
-          {/* Recent Appointments */}
-          <div className="bg-white p-6 shadow rounded-lg">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">
-              Recent Appointments
-            </h2>
-            <div className="space-y-3">
-              {data?.appointments?.slice(0, 8).map((appointment) => (
-                <div
+        <div className="overflow-x-auto">
+          <table className="min-w-full border border-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                  ID
+                </th>
+                <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                  Citizen
+                </th>
+                <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                  Hospital
+                </th>
+                <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                  Location
+                </th>
+                <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                  Doctor
+                </th>
+                <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                  Date
+                </th>
+                <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {data?.appointments?.map((appointment) => (
+                <tr
                   key={appointment.appointment_id}
-                  className="flex justify-between items-center p-3 bg-gray-50 rounded"
+                  className="hover:bg-gray-50"
                 >
-                  <div>
-                    <h3 className="font-semibold flex items-center space-x-2">
-                      <span>{getStatusIcon(appointment.status)}</span>
-                      <span>{appointment.citizen_name}</span>
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      Dr. {appointment.doctor_name} at{" "}
-                      {appointment.hospital_name}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {appointment.location}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium">
-                      {formatDate(appointment.appointment_date)}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {formatTime(appointment.appointment_date)}
-                    </p>
+                  <td className="p-3 text-sm font-medium text-gray-900">
+                    #{appointment.appointment_id}
+                  </td>
+                  <td className="p-3 text-sm text-gray-900">
+                    {appointment.citizen_name}
+                  </td>
+                  <td className="p-3 text-sm text-gray-900">
+                    {appointment.hospital_name}
+                  </td>
+                  <td className="p-3 text-sm text-gray-600">
+                    {appointment.location}
+                  </td>
+                  <td className="p-3 text-sm text-gray-900">
+                    {appointment.doctor_name}
+                  </td>
+                  <td className="p-3 text-sm text-gray-900">
+                    {formatDate(appointment.appointment_date)}
+                  </td>
+                  <td className="p-3 text-sm">
                     <span
-                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full mt-1 ${getStatusColor(
+                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
                         appointment.status
                       )}`}
                     >
                       {appointment.status}
                     </span>
-                  </div>
-                </div>
+                  </td>
+                </tr>
               ))}
-            </div>
-          </div>
+            </tbody>
+          </table>
         </div>
-      )}
 
-      {/* Hospital Performance Tab */}
-      {activeTab === "hospitals" && (
-        <div className="bg-white p-6 shadow rounded-lg">
-          <h2 className="text-xl font-bold mb-4">Hospital Performance</h2>
-          <p className="text-sm text-gray-600 mb-4">
-            SQL: LEFT OUTER JOIN + Aggregations (COUNT, AVG) + GROUP BY + HAVING
-          </p>
-          <div className="space-y-4">
-            {data?.analytics?.hospitalPerformance?.map(
-              (
-                hospital: {
-                  hospital_name: string;
-                  location: string;
-                  total_appointments: number;
-                  completed_appointments: number;
-                  completion_rate: string;
-                },
-                index: number
-              ) => (
-                <div key={index} className="p-4 bg-gray-50 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="font-semibold text-lg">
-                        🏥 {hospital.hospital_name}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        📍 {hospital.location}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm">
-                        <span className="font-medium">Appointments:</span>{" "}
-                        {hospital.total_appointments}
-                      </p>
-                      <p className="text-sm">
-                        <span className="font-medium">Completed:</span>{" "}
-                        {hospital.completed_appointments}
-                      </p>
-                      <p className="text-sm">
-                        <span className="font-medium">Success Rate:</span>{" "}
-                        {parseFloat(hospital.completion_rate).toFixed(1)}%
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Status Summary Tab */}
-      {activeTab === "status" && (
-        <div className="bg-white p-6 shadow rounded-lg">
-          <h2 className="text-xl font-bold mb-4">Status Summary</h2>
-          <p className="text-sm text-gray-600 mb-4">
-            SQL: GROUP BY + Percentage calculation
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {data?.analytics?.statusSummary?.map(
-              (
-                status: {
-                  status: string;
-                  appointment_count: number;
-                  percentage: string;
-                },
-                index: number
-              ) => (
-                <div
-                  key={index}
-                  className="p-4 bg-gray-50 rounded-lg text-center"
-                >
-                  <div className="text-3xl mb-2">
-                    {getStatusIcon(status.status)}
-                  </div>
-                  <h3 className="font-semibold text-lg">{status.status}</h3>
-                  <p className="text-2xl font-bold text-blue-600 mt-2">
-                    {status.appointment_count}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {parseFloat(status.percentage).toFixed(1)}% of total
-                  </p>
-                </div>
-              )
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Analytics Tab */}
-      {activeTab === "analytics" && (
-        <div className="space-y-6">
-          <div className="bg-white p-6 shadow rounded-lg">
-            <h2 className="text-xl font-bold mb-4">Appointment Timeline</h2>
-            <p className="text-sm text-gray-600 mb-4">
-              SQL: INNER JOIN + Subquery for recent data
+        {/* Summary Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+          <div className="bg-blue-50 p-4 rounded-lg text-center">
+            <p className="text-sm text-gray-600">Total Appointments</p>
+            <p className="text-2xl font-bold text-blue-600">
+              {data?.appointments?.length || 0}
             </p>
-            <div className="space-y-2">
-              {data?.analytics?.recentAppointments
-                ?.slice(0, 10)
-                .map((appointment: Appointment, index: number) => (
-                  <div
-                    key={index}
-                    className="flex justify-between items-center p-2 bg-gray-50 rounded"
-                  >
-                    <div>
-                      <span className="font-medium">
-                        {appointment.citizen_name}
-                      </span>
-                      <span className="text-gray-600">
-                        {" "}
-                        → Dr. {appointment.doctor_name}
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm">{appointment.hospital_name}</p>
-                      <p className="text-xs text-gray-500">
-                        {formatDate(appointment.appointment_date)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+          </div>
+          <div className="bg-blue-50 p-4 rounded-lg text-center">
+            <p className="text-sm text-gray-600">Scheduled</p>
+            <p className="text-2xl font-bold text-blue-600">
+              {data?.appointments?.filter((a) => a.status === "Scheduled")
+                .length || 0}
+            </p>
+          </div>
+          <div className="bg-green-50 p-4 rounded-lg text-center">
+            <p className="text-sm text-gray-600">Completed</p>
+            <p className="text-2xl font-bold text-green-600">
+              {data?.appointments?.filter((a) => a.status === "Completed")
+                .length || 0}
+            </p>
+          </div>
+          <div className="bg-red-50 p-4 rounded-lg text-center">
+            <p className="text-sm text-gray-600">Cancelled</p>
+            <p className="text-2xl font-bold text-red-600">
+              {data?.appointments?.filter((a) => a.status === "Cancelled")
+                .length || 0}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Analytics Query Results */}
+      <div className="space-y-6">
+        {/* Query 1: Hospital Performance */}
+        <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-red-500">
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              🔴 Query 1: Hospital Performance
+            </h2>
+            <p className="text-sm text-gray-600 mb-2">
+              <strong>SQL Used:</strong> LEFT OUTER JOIN + GROUP BY +
+              Aggregations (COUNT, SUM, CASE)
+            </p>
+            <div className="bg-gray-50 p-3 rounded text-xs font-mono overflow-x-auto">
+              <code>
+                SELECT h.hospital_name, h.location, COUNT(a.appointment_id),
+                <br />
+                SUM(CASE WHEN a.status = &apos;Completed&apos; THEN 1 ELSE 0
+                END),
+                <br />
+                ROUND((SUM(CASE WHEN a.status = &apos;Completed&apos; THEN 1
+                ELSE 0 END) * 100.0 / COUNT(a.appointment_id)), 2)
+                <br />
+                FROM Hospitals h LEFT OUTER JOIN Appointments a ON h.hospital_id
+                = a.hospital_id
+                <br />
+                GROUP BY h.hospital_id, h.hospital_name, h.location
+              </code>
             </div>
           </div>
 
-          <div className="bg-white p-6 shadow rounded-lg">
-            <h2 className="text-xl font-bold mb-4">All Appointments Table</h2>
+          {data?.analytics?.hospitalPerformance &&
+          data.analytics.hospitalPerformance.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="min-w-full">
-                <thead>
-                  <tr className="bg-gray-50 border-b">
-                    <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                      ID
+              <table className="min-w-full border border-gray-200">
+                <thead className="bg-red-50">
+                  <tr>
+                    <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
+                      Hospital Name
                     </th>
-                    <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                      Patient
+                    <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
+                      Location
                     </th>
-                    <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                      Doctor
+                    <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
+                      Total Appointments
                     </th>
-                    <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                      Hospital
+                    <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
+                      Completed
                     </th>
-                    <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                      Date
-                    </th>
-                    <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                      Status
+                    <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
+                      Completion Rate
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {data?.appointments?.map((appointment) => (
-                    <tr
-                      key={appointment.appointment_id}
-                      className="hover:bg-gray-50"
-                    >
-                      <td className="p-3 text-sm font-medium text-gray-900">
-                        #{appointment.appointment_id}
-                      </td>
-                      <td className="p-3 text-sm text-gray-900">
-                        {appointment.citizen_name}
-                      </td>
-                      <td className="p-3 text-sm text-gray-900">
-                        Dr. {appointment.doctor_name}
-                      </td>
-                      <td className="p-3 text-sm text-gray-900">
-                        <div>
-                          <p>{appointment.hospital_name}</p>
-                          <p className="text-xs text-gray-500">
-                            {appointment.location}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="p-3 text-sm text-gray-900">
-                        <div>
-                          <p>{formatDate(appointment.appointment_date)}</p>
-                          <p className="text-xs text-gray-500">
-                            {formatTime(appointment.appointment_date)}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="p-3 text-sm">
-                        <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                            appointment.status
-                          )}`}
-                        >
-                          {getStatusIcon(appointment.status)}{" "}
-                          {appointment.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                <tbody>
+                  {data.analytics.hospitalPerformance.map(
+                    (hospital: HospitalPerformance, index: number) => (
+                      <tr key={index} className="hover:bg-gray-50">
+                        <td className="p-3 text-sm text-gray-900 border-b font-medium">
+                          {hospital.hospital_name}
+                        </td>
+                        <td className="p-3 text-sm text-gray-900 border-b">
+                          {hospital.location}
+                        </td>
+                        <td className="p-3 text-sm text-gray-900 border-b font-bold">
+                          {hospital.total_appointments}
+                        </td>
+                        <td className="p-3 text-sm text-green-600 border-b font-bold">
+                          {hospital.completed_appointments}
+                        </td>
+                        <td className="p-3 text-sm text-red-600 border-b font-bold">
+                          {hospital.completion_rate}%
+                        </td>
+                      </tr>
+                    )
+                  )}
                 </tbody>
               </table>
             </div>
+          ) : (
+            <p className="text-gray-500 text-center py-4">
+              No hospital performance data found
+            </p>
+          )}
+        </div>
+
+        {/* Query 2: Status Summary */}
+        <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-blue-500">
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              🔵 Query 2: Status Summary
+            </h2>
+            <p className="text-sm text-gray-600 mb-2">
+              <strong>SQL Used:</strong> GROUP BY + Aggregations (COUNT) +
+              Subquery for Percentages
+            </p>
+            <div className="bg-gray-50 p-3 rounded text-xs font-mono overflow-x-auto">
+              <code>
+                SELECT status, COUNT(*),
+                <br />
+                ROUND((COUNT(*) * 100.0 / (SELECT COUNT(*) FROM Appointments)),
+                2)
+                <br />
+                FROM Appointments
+                <br />
+                GROUP BY status
+              </code>
+            </div>
+          </div>
+
+          {data?.analytics?.statusSummary &&
+          data.analytics.statusSummary.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {data.analytics.statusSummary.map(
+                (status: StatusSummary, index: number) => (
+                  <div
+                    key={index}
+                    className="p-6 rounded-lg bg-blue-50 border-2 border-blue-300"
+                  >
+                    <div className="flex items-center justify-center mb-4">
+                      <span
+                        className={`inline-flex px-4 py-2 text-sm font-bold rounded-full ${getStatusColor(
+                          status.status
+                        )}`}
+                      >
+                        {status.status}
+                      </span>
+                    </div>
+                    <div className="space-y-2 text-center">
+                      <p className="text-sm text-gray-600">
+                        <span className="font-medium">Count:</span>{" "}
+                        <span className="text-2xl font-bold text-gray-900">
+                          {status.appointment_count}
+                        </span>
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        <span className="font-medium">Percentage:</span>{" "}
+                        <span className="text-xl font-bold text-blue-600">
+                          {status.percentage}%
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                )
+              )}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-4">
+              No status summary data found
+            </p>
+          )}
+        </div>
+
+        {/* Query 3: Recent Appointments */}
+        <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-green-500">
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              🟢 Query 3: Recent Appointments (Last 30 Days)
+            </h2>
+            <p className="text-sm text-gray-600 mb-2">
+              <strong>SQL Used:</strong> INNER JOIN + Subquery + DATEDIFF
+            </p>
+            <div className="bg-gray-50 p-3 rounded text-xs font-mono overflow-x-auto">
+              <code>
+                SELECT a.appointment_id, c.name, h.hospital_name, h.location,
+                a.doctor_name,
+                <br />
+                a.appointment_date, a.status, DATEDIFF(CURRENT_DATE,
+                a.appointment_date)
+                <br />
+                FROM Appointments a<br />
+                INNER JOIN Citizens c ON a.citizen_id = c.citizen_id
+                <br />
+                INNER JOIN Hospitals h ON a.hospital_id = h.hospital_id
+                <br />
+                WHERE a.appointment_date &gt;= (SELECT
+                DATE_SUB(MAX(appointment_date), INTERVAL 30 DAY) FROM
+                Appointments)
+                <br />
+                ORDER BY a.appointment_date DESC
+              </code>
+            </div>
+          </div>
+
+          {data?.analytics?.recentAppointments &&
+          data.analytics.recentAppointments.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full border border-gray-200">
+                <thead className="bg-green-50">
+                  <tr>
+                    <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
+                      ID
+                    </th>
+                    <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
+                      Citizen
+                    </th>
+                    <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
+                      Hospital
+                    </th>
+                    <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
+                      Location
+                    </th>
+                    <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
+                      Doctor
+                    </th>
+                    <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
+                      Date
+                    </th>
+                    <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
+                      Status
+                    </th>
+                    <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
+                      Days Ago
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.analytics.recentAppointments.map(
+                    (appointment: RecentAppointment, index: number) => (
+                      <tr key={index} className="hover:bg-gray-50">
+                        <td className="p-3 text-sm text-gray-900 border-b font-medium">
+                          #{appointment.appointment_id}
+                        </td>
+                        <td className="p-3 text-sm text-gray-900 border-b">
+                          {appointment.citizen_name}
+                        </td>
+                        <td className="p-3 text-sm text-gray-900 border-b">
+                          {appointment.hospital_name}
+                        </td>
+                        <td className="p-3 text-sm text-gray-600 border-b">
+                          {appointment.location}
+                        </td>
+                        <td className="p-3 text-sm text-gray-900 border-b">
+                          {appointment.doctor_name}
+                        </td>
+                        <td className="p-3 text-sm text-gray-900 border-b">
+                          {formatDate(appointment.appointment_date)}
+                        </td>
+                        <td className="p-3 text-sm border-b">
+                          <span
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                              appointment.status
+                            )}`}
+                          >
+                            {appointment.status}
+                          </span>
+                        </td>
+                        <td className="p-3 text-sm text-gray-600 border-b">
+                          {appointment.days_ago} days
+                        </td>
+                      </tr>
+                    )
+                  )}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-4">
+              No recent appointments found
+            </p>
+          )}
+        </div>
+
+        {/* All Appointments Section */}
+        <div className="bg-white p-6 shadow-lg rounded-lg mt-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            🏥 All Medical Appointments (Main Query)
+          </h2>
+          <p className="text-sm text-gray-600 mb-4">
+            <strong>SQL Used:</strong> INNER JOIN + Window Functions
+          </p>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full border border-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                    ID
+                  </th>
+                  <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                    Citizen
+                  </th>
+                  <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                    Hospital
+                  </th>
+                  <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                    Location
+                  </th>
+                  <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                    Doctor
+                  </th>
+                  <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                    Date
+                  </th>
+                  <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {data?.appointments?.map((appointment) => (
+                  <tr
+                    key={appointment.appointment_id}
+                    className="hover:bg-gray-50"
+                  >
+                    <td className="p-3 text-sm font-medium text-gray-900">
+                      #{appointment.appointment_id}
+                    </td>
+                    <td className="p-3 text-sm text-gray-900">
+                      {appointment.citizen_name}
+                    </td>
+                    <td className="p-3 text-sm text-gray-900">
+                      {appointment.hospital_name}
+                    </td>
+                    <td className="p-3 text-sm text-gray-600">
+                      {appointment.location}
+                    </td>
+                    <td className="p-3 text-sm text-gray-900">
+                      {appointment.doctor_name}
+                    </td>
+                    <td className="p-3 text-sm text-gray-900">
+                      {formatDate(appointment.appointment_date)}
+                    </td>
+                    <td className="p-3 text-sm">
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                          appointment.status
+                        )}`}
+                      >
+                        {appointment.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Summary Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+            <div className="bg-blue-50 p-4 rounded-lg text-center">
+              <p className="text-sm text-gray-600">Total Appointments</p>
+              <p className="text-2xl font-bold text-blue-600">
+                {data?.appointments?.length || 0}
+              </p>
+            </div>
+            <div className="bg-blue-50 p-4 rounded-lg text-center">
+              <p className="text-sm text-gray-600">Scheduled</p>
+              <p className="text-2xl font-bold text-blue-600">
+                {data?.appointments?.filter((a) => a.status === "Scheduled")
+                  .length || 0}
+              </p>
+            </div>
+            <div className="bg-green-50 p-4 rounded-lg text-center">
+              <p className="text-sm text-gray-600">Completed</p>
+              <p className="text-2xl font-bold text-green-600">
+                {data?.appointments?.filter((a) => a.status === "Completed")
+                  .length || 0}
+              </p>
+            </div>
+            <div className="bg-red-50 p-4 rounded-lg text-center">
+              <p className="text-sm text-gray-600">Cancelled</p>
+              <p className="text-2xl font-bold text-red-600">
+                {data?.appointments?.filter((a) => a.status === "Cancelled")
+                  .length || 0}
+              </p>
+            </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
