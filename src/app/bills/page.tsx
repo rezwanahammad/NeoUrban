@@ -1,3 +1,26 @@
+/*
+ * Bills Management Page
+ *
+ * Displays data from /api/bills which executes 5 SQL queries:
+ *
+ * 1. Main Bills List
+ *    SQL Techniques: DISTINCT, INNER JOIN (Citizens, Utilities), CASE statement,
+ *    Multi-column ORDER BY, Column aliasing
+ *
+ * 2. High Unpaid Bills Analysis
+ *    SQL Techniques: INNER JOIN, IN clause, GROUP BY, HAVING with subquery,
+ *    All aggregate functions (COUNT, SUM, AVG, MAX, MIN)
+ *
+ * 3. Utility Summary
+ *    SQL Techniques: LEFT OUTER JOIN, GROUP BY, All aggregates (COUNT, SUM, AVG, MIN, MAX)
+ *
+ * 4. Amount Range Analysis
+ *    SQL Techniques: BETWEEN operator, CASE statement, NOT IN, INNER JOIN, GROUP BY
+ *
+ * 5. Payment Status Breakdown
+ *    SQL Techniques: UNION ALL set operation, Aggregates (COUNT, SUM, AVG), ORDER BY
+ */
+
 "use client";
 import { useEffect, useState } from "react";
 
@@ -6,7 +29,7 @@ type Bill = {
   citizen: string;
   utility: string;
   provider: string;
-  amount: number | string;
+  amount: number | string | null | undefined;
   due_date: string;
   payment_status: "Paid" | "Unpaid";
   days_overdue: number;
@@ -57,8 +80,10 @@ export default function BillsPage() {
     return new Date(dateString).toLocaleDateString();
   };
 
-  const formatAmount = (amount: number | string) => {
+  const formatAmount = (amount: number | string | null | undefined) => {
+    if (amount == null || amount === undefined) return "$0.00";
     const numAmount = typeof amount === "string" ? parseFloat(amount) : amount;
+    if (isNaN(numAmount)) return "$0.00";
     return `$${numAmount.toFixed(2)}`;
   };
 
@@ -85,40 +110,13 @@ export default function BillsPage() {
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Bills Management
         </h1>
-        <p className="text-gray-600">SQL Query Results from Bills API</p>
       </div>
 
       {/* All Bills Section - Main Query */}
       <div className="bg-white p-6 shadow-lg rounded-lg">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">
-          📊 All Bills (Main Query with VIEW and INNER JOIN)
+          All Bills (Main Query with VIEW and INNER JOIN)
         </h2>
-        <p className="text-sm text-gray-600 mb-2">
-          <strong>SQL Techniques Used:</strong> CREATE VIEW, INNER JOIN, CASE
-          statement, Date arithmetic
-        </p>
-        <div className="bg-gray-50 p-3 rounded text-xs font-mono overflow-x-auto mb-4">
-          <code className="whitespace-pre-wrap">
-            {`-- Create View with date calculation
-CREATE OR REPLACE VIEW OverdueBillsView AS
-SELECT bill_id, citizen_id, utility_id, amount, due_date, payment_status,
-  CASE WHEN due_date < CURRENT_DATE AND payment_status = 'Unpaid'
-    THEN (YEAR(CURRENT_DATE) - YEAR(due_date)) * 365 + 
-         (MONTH(CURRENT_DATE) - MONTH(due_date)) * 30 + 
-         (DAY(CURRENT_DATE) - DAY(due_date))
-    ELSE 0 END AS days_overdue
-FROM Bills;
-
--- Main Query
-SELECT v.bill_id, c.name AS citizen, u.type AS utility, u.provider,
-       v.amount, v.due_date, v.payment_status, v.days_overdue
-FROM OverdueBillsView v
-INNER JOIN Citizens c ON v.citizen_id = c.citizen_id
-INNER JOIN Utilities u ON v.utility_id = u.utility_id
-ORDER BY v.due_date DESC;`}
-          </code>
-        </div>
-
         <div className="overflow-x-auto">
           <table className="min-w-full border border-gray-200">
             <thead className="bg-gray-50">
@@ -217,11 +215,12 @@ ORDER BY v.due_date DESC;`}
             <p className="text-2xl font-bold text-purple-600">
               {formatAmount(
                 data?.bills?.reduce((sum, b) => {
+                  if (b.amount == null || b.amount === undefined) return sum;
                   const amount =
                     typeof b.amount === "string"
                       ? parseFloat(b.amount)
                       : b.amount;
-                  return sum + amount;
+                  return sum + (isNaN(amount) ? 0 : amount);
                 }, 0) || 0
               )}
             </p>
@@ -234,25 +233,9 @@ ORDER BY v.due_date DESC;`}
       <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-red-500">
         <div className="mb-4">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            🔴 Query 1: High Unpaid Bills (INNER JOIN + GROUP BY + HAVING +
+            Query 1: High Unpaid Bills (INNER JOIN + GROUP BY + HAVING +
             Subquery)
           </h2>
-          <p className="text-sm text-gray-600 mb-2">
-            <strong>SQL Techniques:</strong> VIEW, INNER JOIN, GROUP BY, HAVING
-            with subquery, Aggregations (SUM, COUNT, AVG, MAX)
-          </p>
-          <div className="bg-gray-50 p-3 rounded text-xs font-mono overflow-x-auto">
-            <code className="whitespace-pre-wrap">
-              {`SELECT c.name, SUM(v.amount) AS total_unpaid, COUNT(*) AS unpaid_count,
-       AVG(v.amount) AS avg_unpaid_amount, MAX(v.days_overdue) AS max_days_overdue
-FROM Citizens c
-INNER JOIN OverdueBillsView v ON c.citizen_id = v.citizen_id
-WHERE v.payment_status = 'Unpaid'
-GROUP BY c.citizen_id, c.name
-HAVING SUM(v.amount) > (SELECT AVG(amount) FROM Bills WHERE payment_status = 'Unpaid')
-ORDER BY total_unpaid DESC;`}
-            </code>
-          </div>
         </div>
 
         {data?.analytics?.highUnpaid && data.analytics.highUnpaid.length > 0 ? (
@@ -317,23 +300,8 @@ ORDER BY total_unpaid DESC;`}
       <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-blue-500">
         <div className="mb-4">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            🔵 Query 2: Utility Type Summary (LEFT OUTER JOIN + Aggregations)
+            Query 2: Utility Type Summary (LEFT OUTER JOIN + Aggregations)
           </h2>
-          <p className="text-sm text-gray-600 mb-2">
-            <strong>SQL Techniques:</strong> LEFT OUTER JOIN, GROUP BY, Multiple
-            Aggregations (COUNT, SUM, AVG, MIN, MAX)
-          </p>
-          <div className="bg-gray-50 p-3 rounded text-xs font-mono overflow-x-auto">
-            <code className="whitespace-pre-wrap">
-              {`SELECT u.type, COUNT(b.bill_id) AS total_bills, SUM(b.amount) AS total_amount,
-       AVG(b.amount) AS avg_amount, MIN(b.amount) AS min_amount,
-       MAX(b.amount) AS max_amount
-FROM Utilities u
-LEFT OUTER JOIN Bills b ON u.utility_id = b.utility_id
-GROUP BY u.type
-ORDER BY total_amount DESC;`}
-            </code>
-          </div>
         </div>
 
         {data?.analytics?.utilitySummary &&
@@ -401,23 +369,9 @@ ORDER BY total_amount DESC;`}
       <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-green-500">
         <div className="mb-4">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            🟢 Query 3: Payment Status Analysis (Subquery + GROUP BY + Date
+            Query 3: Payment Status Analysis (Subquery + GROUP BY + Date
             Functions)
           </h2>
-          <p className="text-sm text-gray-600 mb-2">
-            <strong>SQL Techniques:</strong> Subquery with DATE_SUB, WHERE
-            clause, GROUP BY, Aggregations (COUNT, SUM, AVG)
-          </p>
-          <div className="bg-gray-50 p-3 rounded text-xs font-mono overflow-x-auto">
-            <code className="whitespace-pre-wrap">
-              {`SELECT payment_status, COUNT(*) AS bill_count,
-       SUM(amount) AS total_amount, AVG(amount) AS avg_amount
-FROM Bills
-WHERE due_date >= (SELECT DATE_SUB(MAX(due_date), INTERVAL 30 DAY) FROM Bills)
-GROUP BY payment_status
-ORDER BY total_amount DESC;`}
-            </code>
-          </div>
         </div>
 
         {data?.analytics?.paymentStatus &&

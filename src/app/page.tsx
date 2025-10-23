@@ -15,7 +15,7 @@ type Ticket = {
   citizen_name: string;
   transport_type: string;
   route: string;
-  fare: number | string;
+  fare: number | string | null | undefined;
   booking_date: string;
 };
 type Request = {
@@ -31,7 +31,7 @@ type Bill = {
   bill_id: number;
   citizen: string;
   utility: string;
-  amount: number | string;
+  amount: number | string | null | undefined;
   due_date: string;
   payment_status: string;
 };
@@ -46,8 +46,10 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   // Helper function to format fare
-  const formatFare = (fare: number | string) => {
+  const formatFare = (fare: number | string | null | undefined) => {
+    if (fare === null || fare === undefined) return "$0.00";
     const numFare = typeof fare === "string" ? parseFloat(fare) : fare;
+    if (isNaN(numFare)) return "$0.00";
     return `$${numFare.toFixed(2)}`;
   };
 
@@ -172,10 +174,12 @@ export default function Dashboard() {
               $
               {(
                 bills?.reduce((sum, b) => {
+                  if (b.amount === null || b.amount === undefined) return sum;
                   const amount =
                     typeof b.amount === "string"
                       ? parseFloat(b.amount)
                       : b.amount;
+                  if (isNaN(amount)) return sum;
                   return sum + amount;
                 }, 0) || 0
               ).toLocaleString()}
@@ -379,7 +383,7 @@ export default function Dashboard() {
             </div>
           ) : bills?.length > 0 ? (
             <div className="space-y-4">
-              {bills?.slice(0, 3).map((bill, index) => (
+              {bills?.slice(0, 3).map((bill) => (
                 <div
                   key={bill.bill_id}
                   className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"

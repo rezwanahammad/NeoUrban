@@ -1,3 +1,12 @@
+/*
+ * Citizens Management Page
+ *
+ * Displays data from /api/citizens which executes 1 simple query:
+ *
+ * 1. All Citizens List
+ *    SQL Techniques: SELECT * FROM Citizens (basic SELECT query)
+ */
+
 "use client";
 import { useEffect, useState } from "react";
 

@@ -1,3 +1,33 @@
+/*
+ * Service Requests Management Page
+ *
+ * Displays data from /api/requests which executes 6 SQL queries:
+ *
+ * 1. Main Requests List
+ *    SQL Techniques: DISTINCT, INNER JOIN (Citizens, Services), CASE statement,
+ *    Multi-column ORDER BY, Column aliasing
+ *
+ * 2. High-Demand Citizens
+ *    SQL Techniques: INNER JOIN with USING clause, WHERE with IN, GROUP BY,
+ *    HAVING with COUNT filter, MAX aggregate
+ *
+ * 3. Status Summary with Common Table Expression
+ *    SQL Techniques: WITH clause (CTE), Subquery in SELECT, GROUP BY,
+ *    MIN/MAX aggregates, Arithmetic expressions (ROUND)
+ *
+ * 4. Category Analysis
+ *    SQL Techniques: Multiple INNER JOINs, NOT IN clause, GROUP BY,
+ *    HAVING with COUNT, AVG aggregate
+ *
+ * 5. Priority Analysis
+ *    SQL Techniques: UNION set operation, Multiple SELECT statements,
+ *    INNER JOIN, COUNT and AVG aggregates
+ *
+ * 6. Age Range Analysis
+ *    SQL Techniques: BETWEEN operator, CASE for age groups, COUNT DISTINCT,
+ *    Multiple INNER JOINs, GROUP BY
+ */
+
 "use client";
 import { useEffect, useState } from "react";
 
@@ -6,8 +36,8 @@ type Request = {
   citizen_name: string;
   service_name: string;
   category: string;
-  status: string;
-  priority: string;
+  status: string | null | undefined;
+  priority: string | null | undefined;
   request_date: string;
   age: number;
   gender: string;
@@ -126,36 +156,6 @@ export default function RequestsPage() {
 
       {/* All Requests Section - Main Query */}
       <div className="bg-white p-6 shadow-lg rounded-lg">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">
-          📝 All Service Requests (VIEW + INNER JOIN + Window Functions)
-        </h2>
-        <p className="text-sm text-gray-600 mb-2">
-          <strong>SQL Techniques Used:</strong> CREATE VIEW, INNER JOIN, Window
-          Functions (PARTITION BY), Date arithmetic
-        </p>
-        <div className="bg-gray-50 p-3 rounded text-xs font-mono overflow-x-auto mb-4">
-          <code className="whitespace-pre-wrap">
-            {`-- Create View with date calculation
-CREATE OR REPLACE VIEW RequestDaysView AS
-SELECT request_id, citizen_id, service_id, status, priority, request_date,
-  (YEAR(CURRENT_DATE) - YEAR(request_date)) * 365 + 
-  (MONTH(CURRENT_DATE) - MONTH(request_date)) * 30 + 
-  (DAY(CURRENT_DATE) - DAY(request_date)) AS days_open
-FROM Requests;
-
--- Main Query with Window Functions
-SELECT v.request_id, c.name AS citizen_name, s.service_name, s.category,
-       v.status, v.priority, v.request_date, c.age, c.gender,
-       COUNT(*) OVER (PARTITION BY v.status) AS status_count,
-       COUNT(*) OVER (PARTITION BY s.category) AS category_count,
-       AVG(c.age) OVER (PARTITION BY v.priority) AS avg_age_by_priority,
-       v.days_open
-FROM RequestDaysView v
-INNER JOIN Citizens c ON v.citizen_id = c.citizen_id
-INNER JOIN Services s ON v.service_id = s.service_id
-ORDER BY v.request_date DESC;`}
-          </code>
-        </div>
 
         <div className="overflow-x-auto">
           <table className="min-w-full border border-gray-200">
@@ -244,7 +244,7 @@ ORDER BY v.request_date DESC;`}
             <p className="text-sm text-gray-600">Completed</p>
             <p className="text-2xl font-bold text-green-600">
               {data?.requests?.filter(
-                (r) => r.status.toLowerCase() === "completed"
+                (r) => r.status?.toLowerCase() === "completed"
               ).length || 0}
             </p>
           </div>
@@ -252,7 +252,7 @@ ORDER BY v.request_date DESC;`}
             <p className="text-sm text-gray-600">In Progress</p>
             <p className="text-2xl font-bold text-blue-600">
               {data?.requests?.filter(
-                (r) => r.status.toLowerCase() === "in progress"
+                (r) => r.status?.toLowerCase() === "in progress"
               ).length || 0}
             </p>
           </div>
@@ -260,7 +260,7 @@ ORDER BY v.request_date DESC;`}
             <p className="text-sm text-gray-600">Pending</p>
             <p className="text-2xl font-bold text-yellow-600">
               {data?.requests?.filter(
-                (r) => r.status.toLowerCase() === "pending"
+                (r) => r.status?.toLowerCase() === "pending"
               ).length || 0}
             </p>
           </div>
@@ -269,28 +269,12 @@ ORDER BY v.request_date DESC;`}
 
       {/* Analytics Query Results */}
       <div className="space-y-6">
-        {/* Query 1: High-Demand Citizens */}
+        {/*Query 1: High-Demand Citizens */}
         <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-red-500">
           <div className="mb-4">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              🔴 Query 1: High-Demand Citizens (INNER JOIN + GROUP BY + HAVING)
+              Query 1: High-Demand Citizens (INNER JOIN + GROUP BY + HAVING)
             </h2>
-            <p className="text-sm text-gray-600 mb-2">
-              <strong>SQL Techniques:</strong> Multiple INNER JOINs, GROUP BY,
-              HAVING clause with COUNT
-            </p>
-            <div className="bg-gray-50 p-3 rounded text-xs font-mono overflow-x-auto">
-              <code className="whitespace-pre-wrap">
-                {`SELECT c.name, COUNT(*) AS total_requests, s.category
-FROM Citizens c
-INNER JOIN Requests r ON c.citizen_id = r.citizen_id
-INNER JOIN Services s ON r.service_id = s.service_id
-GROUP BY c.citizen_id, c.name, s.category
-HAVING COUNT(*) > 2
-ORDER BY total_requests DESC
-LIMIT 5;`}
-              </code>
-            </div>
           </div>
 
           {data?.analytics?.highDemandCitizens &&
@@ -336,28 +320,12 @@ LIMIT 5;`}
           )}
         </div>
 
-        {/* Query 2: Status Summary */}
+        {/*Query 2: Status Summary */}
         <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-blue-500">
           <div className="mb-4">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              🔵 Query 2: Status Summary (VIEW + LEFT OUTER JOIN + Aggregations)
+              Query 2: Status Summary (VIEW + LEFT OUTER JOIN + Aggregations)
             </h2>
-            <p className="text-sm text-gray-600 mb-2">
-              <strong>SQL Techniques:</strong> VIEW with date arithmetic, LEFT
-              OUTER JOIN, GROUP BY, Multiple Aggregations
-            </p>
-            <div className="bg-gray-50 p-3 rounded text-xs font-mono overflow-x-auto">
-              <code className="whitespace-pre-wrap">
-                {`SELECT v.status, COUNT(v.request_id) AS total_requests,
-       AVG(v.days_open) AS avg_days_open,
-       MIN(v.request_date) AS oldest_request,
-       MAX(v.request_date) AS newest_request
-FROM RequestDaysView v
-LEFT OUTER JOIN Services s ON v.service_id = s.service_id
-GROUP BY v.status
-ORDER BY total_requests DESC;`}
-              </code>
-            </div>
           </div>
 
           {data?.analytics?.statusSummary &&
@@ -421,27 +389,12 @@ ORDER BY total_requests DESC;`}
           )}
         </div>
 
-        {/* Query 3: Category Analysis */}
+        {/*Query 3: Category Analysis */}
         <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-green-500">
           <div className="mb-4">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              🟢 Query 3: Category Analysis (VIEW + Subquery + GROUP BY)
+              Query 3: Category Analysis (VIEW + Subquery + GROUP BY)
             </h2>
-            <p className="text-sm text-gray-600 mb-2">
-              <strong>SQL Techniques:</strong> VIEW, INNER JOIN, Subquery with
-              DATE_SUB, WHERE clause, GROUP BY, Aggregations
-            </p>
-            <div className="bg-gray-50 p-3 rounded text-xs font-mono overflow-x-auto">
-              <code className="whitespace-pre-wrap">
-                {`SELECT s.category, COUNT(v.request_id) AS total_requests,
-       AVG(v.days_open) AS avg_days_open
-FROM Services s
-INNER JOIN RequestDaysView v ON s.service_id = v.service_id
-WHERE v.request_date >= (SELECT DATE_SUB(MAX(request_date), INTERVAL 30 DAY) FROM Requests)
-GROUP BY s.category
-ORDER BY total_requests DESC;`}
-              </code>
-            </div>
           </div>
 
           {data?.analytics?.categoryAnalysis &&

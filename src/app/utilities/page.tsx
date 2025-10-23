@@ -1,3 +1,12 @@
+/*
+ * Utilities Management Page
+ *
+ * Displays data from /api/utilities which executes 1 query:
+ *
+ * 1. All Utilities List
+ *    SQL Techniques: SELECT with specific columns, ORDER BY utility_id
+ */
+
 "use client";
 import { useEffect, useState } from "react";
 
@@ -46,15 +55,15 @@ export default function UtilitiesPage() {
   const getTypeIcon = (type: string) => {
     switch (type.toLowerCase()) {
       case "electricity":
-        return "⚡";
+        return "Power";
       case "water":
-        return "💧";
+        return "Water";
       case "internet":
-        return "🌐";
+        return "Internet";
       case "gas":
-        return "🔥";
+        return "Gas";
       default:
-        return "⚙️";
+        return "Utility";
     }
   };
 
@@ -94,7 +103,9 @@ export default function UtilitiesPage() {
               className="bg-white p-6 shadow-lg rounded-lg border border-gray-200 hover:shadow-xl transition-shadow"
             >
               <div className="text-center">
-                <span className="text-4xl mb-4 block">{getTypeIcon(type)}</span>
+                <div className="text-lg font-semibold mb-4 text-gray-700">
+                  {getTypeIcon(type)}
+                </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">{type}</h3>
                 <span
                   className={`inline-flex px-4 py-2 text-sm font-semibold rounded-full ${getTypeColor(
@@ -170,9 +181,6 @@ export default function UtilitiesPage() {
                     </td>
                     <td className="p-4 text-sm">
                       <div className="flex items-center space-x-2">
-                        <span className="text-lg">
-                          {getTypeIcon(utility.type)}
-                        </span>
                         <span className="font-semibold text-gray-900">
                           {utility.type}
                         </span>
@@ -230,7 +238,6 @@ export default function UtilitiesPage() {
                           type
                         )}`}
                       >
-                        <span className="mr-1">{getTypeIcon(type)}</span>
                         {type}
                       </span>
                     ))}

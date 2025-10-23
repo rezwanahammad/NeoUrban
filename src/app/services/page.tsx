@@ -1,3 +1,12 @@
+﻿/*
+ * Services Management Page
+ *
+ * Displays data from /api/services which executes 1 query:
+ *
+ * 1. All Services List
+ *    SQL Techniques: SELECT with specific columns, ORDER BY service_id
+ */
+
 "use client";
 import { useEffect, useState } from "react";
 
@@ -29,40 +38,6 @@ export default function ServicesPage() {
       });
   }, []);
 
-  const getCategoryColor = (category: string) => {
-    switch (category.toLowerCase()) {
-      case "waste":
-        return "bg-orange-100 text-orange-800";
-      case "electricity":
-        return "bg-yellow-100 text-yellow-800";
-      case "water":
-        return "bg-blue-100 text-blue-800";
-      case "transport":
-        return "bg-purple-100 text-purple-800";
-      case "healthcare":
-        return "bg-pink-100 text-pink-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getCategoryIcon = (category: string) => {
-    switch (category.toLowerCase()) {
-      case "waste":
-        return "🗑️";
-      case "electricity":
-        return "⚡";
-      case "water":
-        return "💧";
-      case "transport":
-        return "🚌";
-      case "healthcare":
-        return "🏥";
-      default:
-        return "🏢";
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -81,138 +56,62 @@ export default function ServicesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">City Services</h1>
-        <p className="text-gray-600">
-          Manage and monitor all city services and providers
-        </p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          Services Management
+        </h1>
+        <p className="text-gray-600">All available city services</p>
       </div>
 
-      {/* Services Table */}
-      <div className="bg-white p-6 shadow-lg rounded-lg border border-gray-200">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-gray-800">All Services</h2>
-          <span className="text-sm text-gray-500">
-            Total: {services.length} services
-          </span>
+      <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+        <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900">All Services</h2>
         </div>
 
-        {services.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <p className="text-lg mb-2">No services found</p>
-            <p className="text-sm">
-              Services data will appear here when available
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-hidden rounded-lg border border-gray-200">
-            <table className="min-w-full">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="p-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    ID
-                  </th>
-                  <th className="p-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Service Name
-                  </th>
-                  <th className="p-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Category
-                  </th>
-                  <th className="p-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Provider
-                  </th>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Service ID
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Service Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Category
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Provider
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {services.map((service) => (
+                <tr key={service.service_id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    #{service.service_id}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {service.service_name}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {service.category}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    {service.provider}
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {services.map((service, index) => (
-                  <tr
-                    key={service.service_id}
-                    className={`hover:bg-gray-50 ${
-                      index % 2 === 0 ? "bg-white" : "bg-gray-25"
-                    }`}
-                  >
-                    <td className="p-4 text-sm font-medium text-gray-900">
-                      {service.service_id}
-                    </td>
-                    <td className="p-4 text-sm font-semibold text-gray-900">
-                      <div className="flex items-center space-x-2">
-                        <span>{getCategoryIcon(service.category)}</span>
-                        <span>{service.service_name}</span>
-                      </div>
-                    </td>
-                    <td className="p-4 text-sm">
-                      <span
-                        className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getCategoryColor(
-                          service.category
-                        )}`}
-                      >
-                        {service.category}
-                      </span>
-                    </td>
-                    <td className="p-4 text-sm text-gray-900">
-                      {service.provider}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {services.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-gray-500 text-lg">No services found</p>
           </div>
         )}
-      </div>
-
-      {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Total Services
-          </h3>
-          <p className="text-2xl font-bold text-blue-600">{services.length}</p>
-        </div>
-        <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Waste 🗑️
-          </h3>
-          <p className="text-2xl font-bold text-orange-600">
-            {
-              services.filter((s) => s.category.toLowerCase() === "waste")
-                .length
-            }
-          </p>
-        </div>
-        <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Electricity ⚡
-          </h3>
-          <p className="text-2xl font-bold text-yellow-600">
-            {
-              services.filter((s) => s.category.toLowerCase() === "electricity")
-                .length
-            }
-          </p>
-        </div>
-        <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Water 💧
-          </h3>
-          <p className="text-2xl font-bold text-blue-600">
-            {
-              services.filter((s) => s.category.toLowerCase() === "water")
-                .length
-            }
-          </p>
-        </div>
-        <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Healthcare 🏥
-          </h3>
-          <p className="text-2xl font-bold text-pink-600">
-            {
-              services.filter((s) => s.category.toLowerCase() === "healthcare")
-                .length
-            }
-          </p>
-        </div>
       </div>
     </div>
   );

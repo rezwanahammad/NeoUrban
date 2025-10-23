@@ -1,3 +1,12 @@
+/*
+ * Healthcare Facilities Management Page
+ *
+ * Displays data from /api/healthcare which executes 1 query:
+ *
+ * 1. All Healthcare Facilities List
+ *    SQL Techniques: SELECT with specific columns, ORDER BY hospital_id
+ */
+
 "use client";
 import { useEffect, useState } from "react";
 

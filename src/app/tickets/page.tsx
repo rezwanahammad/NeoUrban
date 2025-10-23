@@ -1,3 +1,29 @@
+/*
+ * Transport Tickets Management Page
+ *
+ * Displays data from /api/tickets which executes 5 SQL queries:
+ *
+ * 1. Main Tickets List
+ *    SQL Techniques: INNER JOIN (Citizens, Transportation), Column aliasing,
+ *    ORDER BY booking_date DESC
+ *
+ * 2. High Spenders Analysis
+ *    SQL Techniques: INNER JOIN, GROUP BY, HAVING with SUM filter (> 50),
+ *    Aggregates (SUM, COUNT), ORDER BY
+ *
+ * 3. Route Performance
+ *    SQL Techniques: LEFT OUTER JOIN, GROUP BY multiple columns,
+ *    All aggregates (COUNT, SUM, AVG), ORDER BY
+ *
+ * 4. Transport Type Summary
+ *    SQL Techniques: INNER JOIN, GROUP BY, Aggregates (COUNT, SUM, AVG),
+ *    ORDER BY
+ *
+ * 5. Recent Bookings
+ *    SQL Techniques: INNER JOINs, WHERE with subquery using DATE_SUB,
+ *    ORDER BY, LIMIT
+ */
+
 "use client";
 import { useEffect, useState } from "react";
 
