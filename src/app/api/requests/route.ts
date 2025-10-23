@@ -6,25 +6,52 @@ export async function GET() {
   try {
     const db = getDB();
     
-    // Main requests with analytics
-    const requestsQuery = `
-      SELECT r.request_id, c.name AS citizen_name, s.service_name, s.category, 
-             r.status, r.priority, r.request_date, c.age, c.gender,
-             -- Aggregations
-             COUNT(*) OVER (PARTITION BY r.status) AS status_count,
-             COUNT(*) OVER (PARTITION BY s.category) AS category_count,
-             AVG(c.age) OVER (PARTITION BY r.priority) AS avg_age_by_priority,
-             -- Days since request
-             DATEDIFF(CURRENT_DATE, r.request_date) AS days_open
+    // Create a view for days calculation using basic SQL
+    const createDaysOpenViewQuery = `
+      CREATE OR REPLACE VIEW RequestDaysView AS
+      SELECT 
+          r.request_id,
+          r.citizen_id,
+          r.service_id,
+          r.status,
+          r.priority,
+          r.request_date,
+          (YEAR(CURRENT_DATE) - YEAR(r.request_date)) * 365 + 
+          (MONTH(CURRENT_DATE) - MONTH(r.request_date)) * 30 + 
+          (DAY(CURRENT_DATE) - DAY(r.request_date)) AS days_open
       FROM Requests r
-      INNER JOIN Citizens c ON r.citizen_id = c.citizen_id
-      INNER JOIN Services s ON r.service_id = s.service_id
-      ORDER BY r.request_date DESC
+    `;
+    
+    await db.query(createDaysOpenViewQuery);
+    
+    // Main requests with analytics using INNER JOIN and window functions
+    const requestsQuery = `
+      SELECT 
+          v.request_id, 
+          c.name AS citizen_name, 
+          s.service_name, 
+          s.category, 
+          v.status, 
+          v.priority, 
+          v.request_date, 
+          c.age, 
+          c.gender,
+          COUNT(*) OVER (PARTITION BY v.status) AS status_count,
+          COUNT(*) OVER (PARTITION BY s.category) AS category_count,
+          AVG(c.age) OVER (PARTITION BY v.priority) AS avg_age_by_priority,
+          v.days_open
+      FROM RequestDaysView v
+      INNER JOIN Citizens c ON v.citizen_id = c.citizen_id
+      INNER JOIN Services s ON v.service_id = s.service_id
+      ORDER BY v.request_date DESC
     `;
 
-    // High-demand citizens using GROUP BY and HAVING
+    // High-demand citizens using GROUP BY and HAVING with INNER JOIN
     const highDemandCitizensQuery = `
-      SELECT c.name, COUNT(*) AS total_requests, s.category
+      SELECT 
+          c.name, 
+          COUNT(*) AS total_requests, 
+          s.category
       FROM Citizens c
       INNER JOIN Requests r ON c.citizen_id = r.citizen_id
       INNER JOIN Services s ON r.service_id = s.service_id
@@ -36,24 +63,30 @@ export async function GET() {
 
     // Service status summary using LEFT OUTER JOIN and aggregations
     const statusSummaryQuery = `
-      SELECT r.status,
-             COUNT(r.request_id) AS total_requests,
-             AVG(DATEDIFF(CURRENT_DATE, r.request_date)) AS avg_days_open,
-             MIN(r.request_date) AS oldest_request,
-             MAX(r.request_date) AS newest_request
-      FROM Requests r
-      LEFT OUTER JOIN Services s ON r.service_id = s.service_id
-      GROUP BY r.status
+      SELECT 
+          v.status,
+          COUNT(v.request_id) AS total_requests,
+          AVG(v.days_open) AS avg_days_open,
+          MIN(v.request_date) AS oldest_request,
+          MAX(v.request_date) AS newest_request
+      FROM RequestDaysView v
+      LEFT OUTER JOIN Services s ON v.service_id = s.service_id
+      GROUP BY v.status
       ORDER BY total_requests DESC
     `;
 
     // Service category analysis with subquery
     const categoryAnalysisQuery = `
-      SELECT s.category, COUNT(r.request_id) AS total_requests,
-             AVG(DATEDIFF(CURRENT_DATE, r.request_date)) AS avg_days_open
+      SELECT 
+          s.category, 
+          COUNT(v.request_id) AS total_requests,
+          AVG(v.days_open) AS avg_days_open
       FROM Services s
-      INNER JOIN Requests r ON s.service_id = r.service_id
-      WHERE r.request_date >= (SELECT DATE_SUB(MAX(request_date), INTERVAL 30 DAY) FROM Requests)
+      INNER JOIN RequestDaysView v ON s.service_id = v.service_id
+      WHERE v.request_date >= (
+          SELECT DATE_SUB(MAX(request_date), INTERVAL 30 DAY) 
+          FROM Requests
+      )
       GROUP BY s.category
       ORDER BY total_requests DESC
     `;

@@ -41,14 +41,22 @@ export async function GET() {
 
     // Recent appointments with subquery
     const recentAppointmentsQuery = `
-      SELECT c.name AS citizen_name, h.name AS hospital_name, 
-             a.doctor_name, a.appointment_date, a.status
-      FROM Appointments a
-      INNER JOIN Citizens c ON a.citizen_id = c.citizen_id
-      INNER JOIN Healthcare h ON a.hospital_id = h.hospital_id
-      WHERE a.appointment_date >= (SELECT DATE_SUB(MAX(appointment_date), INTERVAL 7 DAY) FROM Appointments)
-      ORDER BY a.appointment_date DESC
-      LIMIT 10
+  SELECT 
+    c.name AS citizen_name,
+    h.name AS hospital_name,
+    a.doctor_name,
+    a.appointment_date,
+    a.status
+FROM Appointments a
+JOIN Citizens c ON a.citizen_id = c.citizen_id
+JOIN Healthcare h ON a.hospital_id = h.hospital_id
+WHERE a.appointment_date >= DATE_SUB(
+    (SELECT MAX(appointment_date) FROM Appointments),
+    INTERVAL 7 DAY
+)
+ORDER BY a.appointment_date DESC
+LIMIT 10;
+
     `;
 
     // Execute all queries

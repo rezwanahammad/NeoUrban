@@ -106,7 +106,7 @@ export default function AppointmentsPage() {
       {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          🏥 Medical Appointments
+          Medical Appointments
         </h1>
         <p className="text-gray-600">SQL Query Results from Appointments API</p>
       </div>
@@ -114,7 +114,7 @@ export default function AppointmentsPage() {
       {/* All Appointments Section - Main Query */}
       <div className="bg-white p-6 shadow-lg rounded-lg">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">
-          🏥 All Medical Appointments (Main Query)
+         All Medical Appointments (Main Query)
         </h2>
         <p className="text-sm text-gray-600 mb-4">
           <strong>SQL Used:</strong> INNER JOIN + Window Functions
@@ -224,7 +224,7 @@ export default function AppointmentsPage() {
         <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-red-500">
           <div className="mb-4">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              🔴 Query 1: Hospital Performance
+              Query 1: Hospital Performance
             </h2>
             <p className="text-sm text-gray-600 mb-2">
               <strong>SQL Used:</strong> LEFT OUTER JOIN + GROUP BY +
@@ -374,7 +374,7 @@ export default function AppointmentsPage() {
         <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-green-500">
           <div className="mb-4">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              🟢 Query 3: Recent Appointments (Last 30 Days)
+              Query 3: Recent Appointments (Last 30 Days)
             </h2>
             <p className="text-sm text-gray-600 mb-2">
               <strong>SQL Used:</strong> INNER JOIN + Subquery + DATEDIFF
@@ -483,7 +483,7 @@ export default function AppointmentsPage() {
         {/* All Appointments Section */}
         <div className="bg-white p-6 shadow-lg rounded-lg mt-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            🏥 All Medical Appointments (Main Query)
+            All Medical Appointments (Main Query)
           </h2>
           <p className="text-sm text-gray-600 mb-4">
             <strong>SQL Used:</strong> INNER JOIN + Window Functions

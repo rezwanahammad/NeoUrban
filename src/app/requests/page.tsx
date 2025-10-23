@@ -127,12 +127,35 @@ export default function RequestsPage() {
       {/* All Requests Section - Main Query */}
       <div className="bg-white p-6 shadow-lg rounded-lg">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">
-          📝 All Service Requests (Main Query)
+          📝 All Service Requests (VIEW + INNER JOIN + Window Functions)
         </h2>
-        <p className="text-sm text-gray-600 mb-4">
-          <strong>SQL Used:</strong> INNER JOIN + Window Functions (PARTITION
-          BY) + DATEDIFF
+        <p className="text-sm text-gray-600 mb-2">
+          <strong>SQL Techniques Used:</strong> CREATE VIEW, INNER JOIN, Window
+          Functions (PARTITION BY), Date arithmetic
         </p>
+        <div className="bg-gray-50 p-3 rounded text-xs font-mono overflow-x-auto mb-4">
+          <code className="whitespace-pre-wrap">
+            {`-- Create View with date calculation
+CREATE OR REPLACE VIEW RequestDaysView AS
+SELECT request_id, citizen_id, service_id, status, priority, request_date,
+  (YEAR(CURRENT_DATE) - YEAR(request_date)) * 365 + 
+  (MONTH(CURRENT_DATE) - MONTH(request_date)) * 30 + 
+  (DAY(CURRENT_DATE) - DAY(request_date)) AS days_open
+FROM Requests;
+
+-- Main Query with Window Functions
+SELECT v.request_id, c.name AS citizen_name, s.service_name, s.category,
+       v.status, v.priority, v.request_date, c.age, c.gender,
+       COUNT(*) OVER (PARTITION BY v.status) AS status_count,
+       COUNT(*) OVER (PARTITION BY s.category) AS category_count,
+       AVG(c.age) OVER (PARTITION BY v.priority) AS avg_age_by_priority,
+       v.days_open
+FROM RequestDaysView v
+INNER JOIN Citizens c ON v.citizen_id = c.citizen_id
+INNER JOIN Services s ON v.service_id = s.service_id
+ORDER BY v.request_date DESC;`}
+          </code>
+        </div>
 
         <div className="overflow-x-auto">
           <table className="min-w-full border border-gray-200">
@@ -250,23 +273,22 @@ export default function RequestsPage() {
         <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-red-500">
           <div className="mb-4">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              🔴 Query 1: High-Demand Citizens
+              🔴 Query 1: High-Demand Citizens (INNER JOIN + GROUP BY + HAVING)
             </h2>
             <p className="text-sm text-gray-600 mb-2">
-              <strong>SQL Used:</strong> INNER JOIN + GROUP BY + HAVING
+              <strong>SQL Techniques:</strong> Multiple INNER JOINs, GROUP BY,
+              HAVING clause with COUNT
             </p>
             <div className="bg-gray-50 p-3 rounded text-xs font-mono overflow-x-auto">
-              <code>
-                SELECT c.name, COUNT(*) AS total_requests, s.category
-                <br />
-                FROM Citizens c<br />
-                INNER JOIN Requests r ON c.citizen_id = r.citizen_id
-                <br />
-                INNER JOIN Services s ON r.service_id = s.service_id
-                <br />
-                GROUP BY c.citizen_id, c.name, s.category
-                <br />
-                HAVING COUNT(*) &gt; 2
+              <code className="whitespace-pre-wrap">
+                {`SELECT c.name, COUNT(*) AS total_requests, s.category
+FROM Citizens c
+INNER JOIN Requests r ON c.citizen_id = r.citizen_id
+INNER JOIN Services s ON r.service_id = s.service_id
+GROUP BY c.citizen_id, c.name, s.category
+HAVING COUNT(*) > 2
+ORDER BY total_requests DESC
+LIMIT 5;`}
               </code>
             </div>
           </div>
@@ -318,23 +340,22 @@ export default function RequestsPage() {
         <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-blue-500">
           <div className="mb-4">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              🔵 Query 2: Status Summary
+              🔵 Query 2: Status Summary (VIEW + LEFT OUTER JOIN + Aggregations)
             </h2>
             <p className="text-sm text-gray-600 mb-2">
-              <strong>SQL Used:</strong> LEFT OUTER JOIN + GROUP BY +
-              Aggregations (COUNT, AVG, MIN, MAX)
+              <strong>SQL Techniques:</strong> VIEW with date arithmetic, LEFT
+              OUTER JOIN, GROUP BY, Multiple Aggregations
             </p>
             <div className="bg-gray-50 p-3 rounded text-xs font-mono overflow-x-auto">
-              <code>
-                SELECT r.status, COUNT(r.request_id), AVG(DATEDIFF(CURRENT_DATE,
-                r.request_date)),
-                <br />
-                MIN(r.request_date), MAX(r.request_date)
-                <br />
-                FROM Requests r LEFT OUTER JOIN Services s ON r.service_id =
-                s.service_id
-                <br />
-                GROUP BY r.status
+              <code className="whitespace-pre-wrap">
+                {`SELECT v.status, COUNT(v.request_id) AS total_requests,
+       AVG(v.days_open) AS avg_days_open,
+       MIN(v.request_date) AS oldest_request,
+       MAX(v.request_date) AS newest_request
+FROM RequestDaysView v
+LEFT OUTER JOIN Services s ON v.service_id = s.service_id
+GROUP BY v.status
+ORDER BY total_requests DESC;`}
               </code>
             </div>
           </div>
@@ -404,23 +425,21 @@ export default function RequestsPage() {
         <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-green-500">
           <div className="mb-4">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              🟢 Query 3: Category Analysis (Last 30 Days)
+              🟢 Query 3: Category Analysis (VIEW + Subquery + GROUP BY)
             </h2>
             <p className="text-sm text-gray-600 mb-2">
-              <strong>SQL Used:</strong> INNER JOIN + Subquery + GROUP BY
+              <strong>SQL Techniques:</strong> VIEW, INNER JOIN, Subquery with
+              DATE_SUB, WHERE clause, GROUP BY, Aggregations
             </p>
             <div className="bg-gray-50 p-3 rounded text-xs font-mono overflow-x-auto">
-              <code>
-                SELECT s.category, COUNT(r.request_id),
-                AVG(DATEDIFF(CURRENT_DATE, r.request_date))
-                <br />
-                FROM Services s INNER JOIN Requests r ON s.service_id =
-                r.service_id
-                <br />
-                WHERE r.request_date &gt;= (SELECT DATE_SUB(MAX(request_date),
-                INTERVAL 30 DAY) FROM Requests)
-                <br />
-                GROUP BY s.category
+              <code className="whitespace-pre-wrap">
+                {`SELECT s.category, COUNT(v.request_id) AS total_requests,
+       AVG(v.days_open) AS avg_days_open
+FROM Services s
+INNER JOIN RequestDaysView v ON s.service_id = v.service_id
+WHERE v.request_date >= (SELECT DATE_SUB(MAX(request_date), INTERVAL 30 DAY) FROM Requests)
+GROUP BY s.category
+ORDER BY total_requests DESC;`}
               </code>
             </div>
           </div>

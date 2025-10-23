@@ -83,7 +83,7 @@ export default function BillsPage() {
       {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          💰 Bills Management
+          Bills Management
         </h1>
         <p className="text-gray-600">SQL Query Results from Bills API</p>
       </div>
@@ -91,12 +91,33 @@ export default function BillsPage() {
       {/* All Bills Section - Main Query */}
       <div className="bg-white p-6 shadow-lg rounded-lg">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">
-          📋 All Bills (Main Query)
+          📊 All Bills (Main Query with VIEW and INNER JOIN)
         </h2>
-        <p className="text-sm text-gray-600 mb-4">
-          <strong>SQL Used:</strong> INNER JOIN + CASE statement for days
-          overdue
+        <p className="text-sm text-gray-600 mb-2">
+          <strong>SQL Techniques Used:</strong> CREATE VIEW, INNER JOIN, CASE
+          statement, Date arithmetic
         </p>
+        <div className="bg-gray-50 p-3 rounded text-xs font-mono overflow-x-auto mb-4">
+          <code className="whitespace-pre-wrap">
+            {`-- Create View with date calculation
+CREATE OR REPLACE VIEW OverdueBillsView AS
+SELECT bill_id, citizen_id, utility_id, amount, due_date, payment_status,
+  CASE WHEN due_date < CURRENT_DATE AND payment_status = 'Unpaid'
+    THEN (YEAR(CURRENT_DATE) - YEAR(due_date)) * 365 + 
+         (MONTH(CURRENT_DATE) - MONTH(due_date)) * 30 + 
+         (DAY(CURRENT_DATE) - DAY(due_date))
+    ELSE 0 END AS days_overdue
+FROM Bills;
+
+-- Main Query
+SELECT v.bill_id, c.name AS citizen, u.type AS utility, u.provider,
+       v.amount, v.due_date, v.payment_status, v.days_overdue
+FROM OverdueBillsView v
+INNER JOIN Citizens c ON v.citizen_id = c.citizen_id
+INNER JOIN Utilities u ON v.utility_id = u.utility_id
+ORDER BY v.due_date DESC;`}
+          </code>
+        </div>
 
         <div className="overflow-x-auto">
           <table className="min-w-full border border-gray-200">
@@ -213,24 +234,23 @@ export default function BillsPage() {
       <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-red-500">
         <div className="mb-4">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            🔴 Query 1: High Unpaid Bills
+            🔴 Query 1: High Unpaid Bills (INNER JOIN + GROUP BY + HAVING +
+            Subquery)
           </h2>
           <p className="text-sm text-gray-600 mb-2">
-            <strong>SQL Used:</strong> INNER JOIN + GROUP BY + HAVING + Subquery
+            <strong>SQL Techniques:</strong> VIEW, INNER JOIN, GROUP BY, HAVING
+            with subquery, Aggregations (SUM, COUNT, AVG, MAX)
           </p>
           <div className="bg-gray-50 p-3 rounded text-xs font-mono overflow-x-auto">
-            <code>
-              SELECT c.name, SUM(b.amount) AS total_unpaid, COUNT(*) AS
-              unpaid_count
-              <br />
-              FROM Citizens c INNER JOIN Bills b ON c.citizen_id = b.citizen_id
-              <br />
-              WHERE b.payment_status = 'Unpaid'
-              <br />
-              GROUP BY c.citizen_id, c.name
-              <br />
-              HAVING SUM(b.amount) &gt; (SELECT AVG(amount) FROM Bills WHERE
-              payment_status = 'Unpaid')
+            <code className="whitespace-pre-wrap">
+              {`SELECT c.name, SUM(v.amount) AS total_unpaid, COUNT(*) AS unpaid_count,
+       AVG(v.amount) AS avg_unpaid_amount, MAX(v.days_overdue) AS max_days_overdue
+FROM Citizens c
+INNER JOIN OverdueBillsView v ON c.citizen_id = v.citizen_id
+WHERE v.payment_status = 'Unpaid'
+GROUP BY c.citizen_id, c.name
+HAVING SUM(v.amount) > (SELECT AVG(amount) FROM Bills WHERE payment_status = 'Unpaid')
+ORDER BY total_unpaid DESC;`}
             </code>
           </div>
         </div>
@@ -297,21 +317,21 @@ export default function BillsPage() {
       <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-blue-500">
         <div className="mb-4">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            🔵 Query 2: Utility Type Summary
+            🔵 Query 2: Utility Type Summary (LEFT OUTER JOIN + Aggregations)
           </h2>
           <p className="text-sm text-gray-600 mb-2">
-            <strong>SQL Used:</strong> LEFT OUTER JOIN + GROUP BY + Aggregations
-            (COUNT, SUM, AVG, MIN, MAX)
+            <strong>SQL Techniques:</strong> LEFT OUTER JOIN, GROUP BY, Multiple
+            Aggregations (COUNT, SUM, AVG, MIN, MAX)
           </p>
           <div className="bg-gray-50 p-3 rounded text-xs font-mono overflow-x-auto">
-            <code>
-              SELECT u.type, COUNT(b.bill_id), SUM(b.amount), AVG(b.amount),
-              MIN(b.amount), MAX(b.amount)
-              <br />
-              FROM Utilities u LEFT OUTER JOIN Bills b ON u.utility_id =
-              b.utility_id
-              <br />
-              GROUP BY u.type
+            <code className="whitespace-pre-wrap">
+              {`SELECT u.type, COUNT(b.bill_id) AS total_bills, SUM(b.amount) AS total_amount,
+       AVG(b.amount) AS avg_amount, MIN(b.amount) AS min_amount,
+       MAX(b.amount) AS max_amount
+FROM Utilities u
+LEFT OUTER JOIN Bills b ON u.utility_id = b.utility_id
+GROUP BY u.type
+ORDER BY total_amount DESC;`}
             </code>
           </div>
         </div>
@@ -381,22 +401,21 @@ export default function BillsPage() {
       <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-green-500">
         <div className="mb-4">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            🟢 Query 3: Payment Status Analysis (Last 30 Days)
+            🟢 Query 3: Payment Status Analysis (Subquery + GROUP BY + Date
+            Functions)
           </h2>
           <p className="text-sm text-gray-600 mb-2">
-            <strong>SQL Used:</strong> Subquery + GROUP BY + Aggregations
+            <strong>SQL Techniques:</strong> Subquery with DATE_SUB, WHERE
+            clause, GROUP BY, Aggregations (COUNT, SUM, AVG)
           </p>
           <div className="bg-gray-50 p-3 rounded text-xs font-mono overflow-x-auto">
-            <code>
-              SELECT payment_status, COUNT(*) AS bill_count, SUM(amount),
-              AVG(amount)
-              <br />
-              FROM Bills
-              <br />
-              WHERE due_date &gt;= (SELECT DATE_SUB(MAX(due_date), INTERVAL 30
-              DAY) FROM Bills)
-              <br />
-              GROUP BY payment_status
+            <code className="whitespace-pre-wrap">
+              {`SELECT payment_status, COUNT(*) AS bill_count,
+       SUM(amount) AS total_amount, AVG(amount) AS avg_amount
+FROM Bills
+WHERE due_date >= (SELECT DATE_SUB(MAX(due_date), INTERVAL 30 DAY) FROM Bills)
+GROUP BY payment_status
+ORDER BY total_amount DESC;`}
             </code>
           </div>
         </div>
