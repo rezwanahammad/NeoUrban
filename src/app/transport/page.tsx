@@ -1,15 +1,3 @@
-/*
- * Transportation Management Page
- *
- * Displays data from /api/transport which executes 2 queries:
- *
- * 1. All Transportation Systems List
- *    SQL Techniques: SELECT with specific columns, ORDER BY capacity DESC
- *
- * 2. Transportation Statistics
- *    SQL Techniques: COUNT(*), SUM(), AVG(), MAX(), MIN(), CASE WHEN aggregations
- *    Performance: All calculations moved from frontend to SQL for efficiency
- */
 
 "use client";
 import { useEffect, useState } from "react";
@@ -110,7 +98,6 @@ export default function TransportPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Transportation
@@ -201,7 +188,7 @@ export default function TransportPage() {
         )}
       </div>
 
-      {/* Summary Stats - Using SQL calculated values */}
+      {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
@@ -237,7 +224,7 @@ export default function TransportPage() {
         </div>
       </div>
 
-      {/* Capacity Overview - Now using SQL calculated statistics */}
+      {/* Capacity Overview */}
       <div className="bg-white p-6 shadow-lg rounded-lg border border-gray-200">
         <h2 className="text-xl font-bold text-gray-800 mb-4">
           Capacity Overview

@@ -6,7 +6,6 @@ export async function GET() {
   try {
     const db = getDB();
     
-    // Query 1: Main requests - INNER JOIN, DISTINCT, Column Aliasing, Multi-column ORDER BY
     const requestsQuery = `
       SELECT DISTINCT
           r.request_id, 

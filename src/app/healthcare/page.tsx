@@ -1,15 +1,3 @@
-/*
- * Healthcare Facilities Management Page
- *
- * Displays data from /api/healthcare which executes 2 queries:
- *
- * 1. All Healthcare Facilities List
- *    SQL Techniques: SELECT with specific columns, ORDER BY capacity DESC
- *
- * 2. Healthcare Capacity Statistics
- *    SQL Techniques: COUNT(*), SUM(), AVG(), MAX(), MIN() aggregation functions
- *    Performance: All calculations moved from frontend to SQL for efficiency
- */
 
 "use client";
 import { useEffect, useState } from "react";
@@ -201,7 +189,7 @@ export default function HealthcarePage() {
         )}
       </div>
 
-      {/* Summary Stats - Using SQL calculated values */}
+      {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
@@ -240,7 +228,7 @@ export default function HealthcarePage() {
         </div>
       </div>
 
-      {/* Capacity Analysis - Now using SQL calculated statistics */}
+      {/* Capacity Analysis */}
       <div className="bg-white p-6 shadow-lg rounded-lg border border-gray-200">
         <h2 className="text-xl font-bold text-gray-800 mb-4">
           Capacity Analysis

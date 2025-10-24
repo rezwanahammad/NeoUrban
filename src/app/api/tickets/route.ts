@@ -6,7 +6,6 @@ export async function GET() {
   try {
     const db = getDB();
     
-    // Main tickets query
     const ticketsQuery = `
       SELECT 
     t.ticket_id,
@@ -21,7 +20,6 @@ INNER JOIN Transportation tr ON t.transport_id = tr.transport_id
 ORDER BY ticket_id;
     `;
 
-    //highspenders those who spent more than 100 for tickets
     const highSpendersQuery = `
       SELECT c.name, SUM(t.fare) AS total_spent, COUNT(*) AS ticket_count
       FROM Citizens c
@@ -31,7 +29,6 @@ ORDER BY ticket_id;
       ORDER BY total_spent DESC
     `;
 
-    //problem
     const routePerformanceQuery = `
       SELECT tr.route, tr.type,
              COUNT(t.ticket_id) AS total_bookings,
@@ -43,7 +40,6 @@ ORDER BY ticket_id;
       ORDER BY total_revenue DESC
     `;
 
-    // Transport type summary with simple aggregations
     const transportSummaryQuery = `
       SELECT tr.type AS transport_type,
              COUNT(t.ticket_id) AS total_bookings,
@@ -55,7 +51,6 @@ ORDER BY ticket_id;
       ORDER BY total_revenue DESC
     `;
 
-    // Execute all queries
     const [tickets] = await db.query(ticketsQuery);
     const [highSpenders] = await db.query(highSpendersQuery);
     const [routePerformance] = await db.query(routePerformanceQuery);

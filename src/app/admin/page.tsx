@@ -1,15 +1,28 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+type Citizen = {
+  citizen_id: number;
+  name: string;
+  age: number;
+  gender: string;
+  address: string;
+  contact: string;
+};
 
 export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState("citizens");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [citizens, setCitizens] = useState<Citizen[]>([]);
+  const [editingCitizen, setEditingCitizen] = useState<Citizen | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   // Form states for each table
   const [citizenForm, setCitizenForm] = useState({
     name: "",
     age: "",
+    gender: "",
     address: "",
     contact: "",
   });
@@ -106,6 +119,7 @@ export default function AdminPanel() {
             setCitizenForm({
               name: "",
               age: "",
+              gender: "",
               address: "",
               contact: "",
             });
@@ -166,6 +180,100 @@ export default function AdminPanel() {
     setLoading(false);
   };
 
+  // Fetch citizens list
+  const fetchCitizens = async () => {
+    try {
+      const response = await fetch("/api/citizens");
+      if (response.ok) {
+        const data = await response.json();
+        setCitizens(data.citizens || []);
+      }
+    } catch (error) {
+      console.error("Error fetching citizens:", error);
+    }
+  };
+
+  // Load citizens when component mounts or when activeTab changes to citizens
+  useEffect(() => {
+    if (activeTab === "citizens") {
+      fetchCitizens();
+    }
+  }, [activeTab]);
+
+  // Update citizen
+  const handleUpdateCitizen = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCitizen) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `/api/admin/citizens/${editingCitizen.citizen_id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: editingCitizen.name,
+            age: editingCitizen.age,
+            gender: editingCitizen.gender,
+            address: editingCitizen.address,
+            contact: editingCitizen.contact,
+          }),
+        }
+      );
+
+      if (response.ok) {
+        setMessage("Citizen updated successfully!");
+        setShowEditModal(false);
+        setEditingCitizen(null);
+        fetchCitizens(); // Refresh the list
+      } else {
+        const error = await response.json();
+        setMessage(`Error: ${error.error || error.message}`);
+      }
+    } catch (error) {
+      setMessage(`Error updating citizen: ${error}`);
+    }
+    setLoading(false);
+    setTimeout(() => setMessage(""), 3000);
+  };
+
+  // Delete citizen
+  const handleDeleteCitizen = async (citizenId: number) => {
+    if (
+      !confirm(
+        "Are you sure you want to delete this citizen? This action cannot be undone."
+      )
+    ) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/admin/citizens/${citizenId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        setMessage("Citizen deleted successfully!");
+        fetchCitizens(); // Refresh the list
+      } else {
+        const error = await response.json();
+        if (error.details) {
+          setMessage(
+            `Cannot delete: Citizen has ${error.details.bills} bills, ${error.details.requests} requests, ${error.details.appointments} appointments, ${error.details.tickets} tickets`
+          );
+        } else {
+          setMessage(`Error: ${error.error || error.message}`);
+        }
+      }
+    } catch (error) {
+      setMessage(`Error deleting citizen: ${error}`);
+    }
+    setLoading(false);
+    setTimeout(() => setMessage(""), 5000);
+  };
+
   const renderForm = (tableName: string) => {
     switch (tableName) {
       case "citizens":
@@ -191,6 +299,29 @@ export default function AdminPanel() {
               className="p-3 border rounded-lg"
               required
             />
+            <select
+              value={citizenForm.gender}
+              onChange={(e) =>
+                setCitizenForm((prev) => ({ ...prev, gender: e.target.value }))
+              }
+              className="p-3 border rounded-lg"
+              required
+              title="Select Gender"
+            >
+              <option value="">Select Gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+            <input
+              type="tel"
+              placeholder="Contact (Phone)"
+              value={citizenForm.contact}
+              onChange={(e) =>
+                setCitizenForm((prev) => ({ ...prev, contact: e.target.value }))
+              }
+              className="p-3 border rounded-lg"
+            />
             <input
               type="text"
               placeholder="Address"
@@ -198,17 +329,8 @@ export default function AdminPanel() {
               onChange={(e) =>
                 setCitizenForm((prev) => ({ ...prev, address: e.target.value }))
               }
-              className="p-3 border rounded-lg col-span-2"
-              required
-            />
-            <input
-              type="tel"
-              placeholder="Contact"
-              value={citizenForm.contact}
-              onChange={(e) =>
-                setCitizenForm((prev) => ({ ...prev, contact: e.target.value }))
-              }
               className="p-3 border rounded-lg"
+              required
             />
           </div>
         );
@@ -276,6 +398,7 @@ export default function AdminPanel() {
                 setUtilityForm((prev) => ({ ...prev, type: e.target.value }))
               }
               className="p-3 border rounded-lg"
+              title="Utility Type"
             >
               <option value="Electricity">Electricity</option>
               <option value="Water">Water</option>
@@ -323,6 +446,7 @@ export default function AdminPanel() {
                 }))
               }
               className="p-3 border rounded-lg"
+              title="Service Category"
             >
               <option value="Waste">Waste</option>
               <option value="Electricity">Electricity</option>
@@ -360,6 +484,7 @@ export default function AdminPanel() {
                 }))
               }
               className="p-3 border rounded-lg"
+              title="Citizen ID"
               required
             />
             <input
@@ -470,6 +595,7 @@ export default function AdminPanel() {
                 }))
               }
               className="p-3 border rounded-lg col-span-2"
+              title="Payment Status"
             >
               <option value="Paid">Paid</option>
               <option value="Unpaid">Unpaid</option>
@@ -519,7 +645,6 @@ export default function AdminPanel() {
             />
             <input
               type="date"
-              placeholder="Booking Date"
               value={ticketForm.booking_date}
               onChange={(e) =>
                 setTicketForm((prev) => ({
@@ -528,6 +653,7 @@ export default function AdminPanel() {
                 }))
               }
               className="p-3 border rounded-lg"
+              title="Booking Date"
               required
             />
           </div>
@@ -606,6 +732,204 @@ export default function AdminPanel() {
             </button>
           </form>
         </div>
+
+        {/* Citizens List - only show for citizens tab */}
+        {activeTab === "citizens" && (
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">
+                Citizens List
+              </h2>
+              <button
+                onClick={fetchCitizens}
+                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
+              >
+                Refresh
+              </button>
+            </div>
+
+            {citizens.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="min-w-full border border-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                        ID
+                      </th>
+                      <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                        Name
+                      </th>
+                      <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                        Age
+                      </th>
+                      <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                        Gender
+                      </th>
+                      <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                        Address
+                      </th>
+                      <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                        Contact
+                      </th>
+                      <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {citizens.map((citizen) => (
+                      <tr key={citizen.citizen_id} className="hover:bg-gray-50">
+                        <td className="p-3 text-sm font-medium text-gray-900">
+                          #{citizen.citizen_id}
+                        </td>
+                        <td className="p-3 text-sm text-gray-900">
+                          {citizen.name}
+                        </td>
+                        <td className="p-3 text-sm text-gray-900">
+                          {citizen.age}
+                        </td>
+                        <td className="p-3 text-sm text-gray-900">
+                          {citizen.gender}
+                        </td>
+                        <td className="p-3 text-sm text-gray-900">
+                          {citizen.address}
+                        </td>
+                        <td className="p-3 text-sm text-gray-900">
+                          {citizen.contact}
+                        </td>
+                        <td className="p-3 text-sm">
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => {
+                                setEditingCitizen(citizen);
+                                setShowEditModal(true);
+                              }}
+                              className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-xs"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() =>
+                                handleDeleteCitizen(citizen.citizen_id)
+                              }
+                              className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-gray-500 text-center py-4">
+                No citizens found. Add some citizens using the form above.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Edit Modal */}
+        {showEditModal && editingCitizen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">
+                Edit Citizen
+              </h3>
+              <form onSubmit={handleUpdateCitizen} className="space-y-4">
+                <input
+                  type="text"
+                  placeholder="Full Name"
+                  value={editingCitizen.name}
+                  onChange={(e) =>
+                    setEditingCitizen({
+                      ...editingCitizen,
+                      name: e.target.value,
+                    })
+                  }
+                  className="w-full p-3 border rounded-lg"
+                  required
+                />
+                <input
+                  type="number"
+                  placeholder="Age"
+                  value={editingCitizen.age}
+                  onChange={(e) =>
+                    setEditingCitizen({
+                      ...editingCitizen,
+                      age: parseInt(e.target.value) || 0,
+                    })
+                  }
+                  className="w-full p-3 border rounded-lg"
+                  title="Age"
+                  required
+                />
+                <select
+                  value={editingCitizen.gender}
+                  onChange={(e) =>
+                    setEditingCitizen({
+                      ...editingCitizen,
+                      gender: e.target.value,
+                    })
+                  }
+                  className="w-full p-3 border rounded-lg"
+                  required
+                  title="Select Gender"
+                >
+                  <option value="">Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+                <input
+                  type="tel"
+                  placeholder="Contact (Phone)"
+                  value={editingCitizen.contact}
+                  onChange={(e) =>
+                    setEditingCitizen({
+                      ...editingCitizen,
+                      contact: e.target.value,
+                    })
+                  }
+                  className="w-full p-3 border rounded-lg"
+                />
+                <textarea
+                  placeholder="Address"
+                  value={editingCitizen.address}
+                  onChange={(e) =>
+                    setEditingCitizen({
+                      ...editingCitizen,
+                      address: e.target.value,
+                    })
+                  }
+                  className="w-full p-3 border rounded-lg"
+                  rows={3}
+                />
+                <div className="flex space-x-3">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {loading ? "Updating..." : "Update"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowEditModal(false);
+                      setEditingCitizen(null);
+                    }}
+                    className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

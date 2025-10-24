@@ -1,10 +1,4 @@
-/*
- * Citizens Management Page
- *
- * Displays data from /api/citizens which executes 1 simple query:
- * 1. All Citizens List
- *    SQL Techniques: SELECT * FROM Citizens (basic SELECT query)
- */
+
 
 "use client";
 import { useEffect, useState } from "react";
@@ -38,8 +32,6 @@ export default function CitizensPage() {
         <h2 className="text-3xl font-bold mb-6 text-slate-800 flex items-center gap-2">
           All Citizens List
         </h2>
-
-        {/* Search Bar */}
         <div className="mb-5 flex justify-between items-center">
           <input
             type="text"

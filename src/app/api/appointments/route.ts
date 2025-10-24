@@ -16,7 +16,7 @@ export async function GET() {
       ORDER BY a.appointment_date DESC
     `;
 
-    // Hospital performance with aggregations (COUNT, AVG)
+    // Use of LEFT OUTER JOIN and HAVING
     const hospitalPerformanceQuery = `
       SELECT h.name AS hospital_name, h.location,
              COUNT(a.appointment_id) AS total_appointments,
@@ -29,7 +29,7 @@ export async function GET() {
       ORDER BY total_appointments DESC
     `;
 
-    // Status summary with GROUP BY
+    // Use of GROUP BY with percentage calculation
     const statusSummaryQuery = `
       SELECT status,
              COUNT(*) AS appointment_count,
@@ -59,7 +59,6 @@ export async function GET() {
       LIMIT 10
     `;
 
-    // Execute all queries
     const [appointments] = await db.query(appointmentsQuery);
     const [hospitalPerformance] = await db.query(hospitalPerformanceQuery);
     const [statusSummary] = await db.query(statusSummaryQuery);

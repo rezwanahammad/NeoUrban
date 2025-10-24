@@ -91,9 +91,7 @@ CREATE TABLE Bills (
   FOREIGN KEY (utility_id) REFERENCES Utilities(utility_id)
 );
 
--------------------------------------------------
 -- INSERT DATA
--------------------------------------------------
 
 -- Citizens
 INSERT INTO Citizens (name, age, gender, address, contact) VALUES

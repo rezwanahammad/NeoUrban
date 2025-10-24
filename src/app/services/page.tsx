@@ -1,11 +1,4 @@
-﻿/*
- * Services Management Page
- *
- * Displays data from /api/services which executes 1 query:
- *
- * 1. All Services List
- *    SQL Techniques: SELECT with specific columns, ORDER BY service_id
- */
+﻿
 
 "use client";
 import { useEffect, useState } from "react";

@@ -6,14 +6,12 @@ export async function GET() {
   try {
     const db = getDB();
     
-    // Main healthcare facilities query
     const facilitiesQuery = `
       SELECT hospital_id as id, name, location, capacity
       FROM Healthcare
       ORDER BY id
     `;
     
-    // Capacity statistics query using aggregations
     const statisticsQuery = `
       SELECT 
         COUNT(*) AS total_facilities,
@@ -24,11 +22,9 @@ export async function GET() {
       FROM Healthcare
     `;
     
-    // Execute both queries
     const [facilities] = await db.query(facilitiesQuery);
     const [stats] = await db.query(statisticsQuery);
     
-    // Define interface for statistics result
     interface CapacityStats {
       total_facilities: number;
       total_capacity: number;

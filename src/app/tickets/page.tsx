@@ -1,29 +1,3 @@
-/*
- * Transport Tickets Management Page
- *
- * Displays data from /api/tickets which executes 5 SQL queries:
- *
- * 1. Main Tickets List
- *    SQL Techniques: INNER JOIN (Citizens, Transportation), Column aliasing,
- *    ORDER BY booking_date DESC
- *
- * 2. High Spenders Analysis
- *    SQL Techniques: INNER JOIN, GROUP BY, HAVING with SUM filter (> 50),
- *    Aggregates (SUM, COUNT), ORDER BY
- *
- * 3. Route Performance
- *    SQL Techniques: LEFT OUTER JOIN, GROUP BY multiple columns,
- *    All aggregates (COUNT, SUM, AVG), ORDER BY
- *
- * 4. Transport Type Summary
- *    SQL Techniques: INNER JOIN, GROUP BY, Aggregates (COUNT, SUM, AVG),
- *    ORDER BY
- *
- * 5. Recent Bookings
- *    SQL Techniques: INNER JOINs, WHERE with subquery using DATE_SUB,
- *    ORDER BY, LIMIT
- */
-
 "use client";
 import { useEffect, useState } from "react";
 
@@ -149,7 +123,7 @@ export default function TicketsPage() {
         <p className="text-gray-600">SQL Query Results from Tickets API</p>
       </div>
 
-      {/* All Tickets Section - Main Query */}
+      {/* All Tickets*/}
       <div className="bg-white p-6 shadow-lg rounded-lg">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">
           All Transport Tickets
@@ -242,9 +216,8 @@ export default function TicketsPage() {
         </div>
       </div>
 
-      {/* Analytics Query Results */}
       <div className="space-y-6">
-        {/* Query 1: High Spenders */}
+        {/*High Spenders */}
         <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-red-500">
           <div className="mb-4">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
@@ -288,7 +261,7 @@ export default function TicketsPage() {
           )}
         </div>
 
-        {/* Query 2: Route Performance */}
+        {/*Route Performance */}
         <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-blue-500">
           <div className="mb-4">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
@@ -340,7 +313,7 @@ export default function TicketsPage() {
           )}
         </div>
 
-        {/* Query 3: Transport Summary */}
+        {/*Transport Summary */}
         <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-green-500">
           <div className="mb-4">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">

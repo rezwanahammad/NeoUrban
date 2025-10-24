@@ -5,28 +5,13 @@ export const runtime = "nodejs";
 export async function GET() {
   try {
     const db = getDB();
-    
-    /**
-     * Transportation SQL Query:
-     * - Fetches all transportation systems with their details
-     * - Includes transport ID, type, route, and capacity
-     * - Ordered by capacity in descending order for better visualization
-     */
+  
     const facilitiesQuery = `
       SELECT transport_id as id, type, route, capacity
       FROM Transportation
       ORDER BY id
     `;
     
-    /**
-     * Transportation Statistics SQL Query:
-     * - Calculates total transport systems count
-     * - Computes total capacity across all systems
-     * - Calculates average capacity per system
-     * - Finds highest capacity system
-     * - Counts systems by type (Bus, Metro, Train)
-     * - All calculations done at database level for performance
-     */
     const statisticsQuery = `
       SELECT 
         COUNT(*) as total_systems,
@@ -40,11 +25,9 @@ export async function GET() {
       FROM Transportation
     `;
 
-    // Execute both queries
     const [systems] = await db.query(facilitiesQuery);
     const [stats] = await db.query(statisticsQuery);
     
-    // Define interface for statistics result
     interface TransportStats {
       total_systems: number;
       total_capacity: number;

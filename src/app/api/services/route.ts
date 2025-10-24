@@ -19,13 +19,9 @@ export async function GET() {
   try {
     const db = getDB();
 
-    // 1️⃣ Create or update the view (safe to run every time)
     await db.query(createViewQuery);
 
-    // 2️⃣ Fetch data from the view
     const [rows] = await db.query(selectFromViewQuery);
-
-    // 3️⃣ Return as JSON
     return Response.json(rows);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);

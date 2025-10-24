@@ -1,25 +1,3 @@
-/*
- * Bills Management Page
- *
- * Displays data from /api/bills which executes 5 SQL queries:
- *
- * 1. Main Bills List
- *    SQL Techniques: DISTINCT, INNER JOIN (Citizens, Utilities), CASE statement,
- *    Multi-column ORDER BY, Column aliasing
- *
- * 2. High Unpaid Bills Analysis
- *    SQL Techniques: INNER JOIN, IN clause, GROUP BY, HAVING with subquery,
- *    All aggregate functions (COUNT, SUM, AVG, MAX, MIN)
- *
- * 3. Utility Summary
- *    SQL Techniques: LEFT OUTER JOIN, GROUP BY, All aggregates (COUNT, SUM, AVG, MIN, MAX)
- *
- * 4. Amount Range Analysis
- *    SQL Techniques: BETWEEN operator, CASE statement, NOT IN, INNER JOIN, GROUP BY
- *
- * 5. Payment Status Breakdown
- *    SQL Techniques: UNION ALL set operation, Aggregates (COUNT, SUM, AVG), ORDER BY
- */
 
 "use client";
 import { useEffect, useState } from "react";
@@ -35,12 +13,16 @@ type Bill = {
   bill_status: string;
 };
 
+type AnalyticsItem = {
+  [key: string]: string | number;
+};
+
 type BillsData = {
   bills: Bill[];
   analytics: {
-    highUnpaid: any[];
-    utilitySummary: any[];
-    paymentStatus: any[];
+    highUnpaid: AnalyticsItem[];
+    utilitySummary: AnalyticsItem[];
+    paymentStatus: AnalyticsItem[];
   };
 };
 
@@ -105,14 +87,13 @@ export default function BillsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Bills Management
         </h1>
       </div>
 
-      {/* All Bills Section - Main Query */}
+      {/* All Bills Section*/}
       <div className="bg-white p-6 shadow-lg rounded-lg">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">All Bills</h2>
         <div className="overflow-x-auto">
@@ -237,18 +218,17 @@ export default function BillsPage() {
         </div>
       </div>
 
-      {/* Query 3: Payment Status */}
+      {/* Payment Status */}
       <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-green-500">
         <div className="mb-4">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
             Payment Status Analysis
           </h2>
         </div>
-
         {data?.analytics?.paymentStatus &&
         data.analytics.paymentStatus.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {data.analytics.paymentStatus.map((item: any, index: number) => (
+            {data.analytics.paymentStatus.map((item: AnalyticsItem, index: number) => (
               <div
                 key={index}
                 className={`p-6 rounded-lg ${

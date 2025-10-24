@@ -2,28 +2,10 @@ import { getDB } from "../../../lib/db";
 
 export const runtime = "nodejs";
 
-/*
- * Bills API - Returns 2 analytical queries using only allowed SQL operations
- * 
- * Query 1: Main bills list
- *   - DISTINCT for unique records
- *   - INNER JOIN with Citizens and Utilities tables
- *   - CASE statement for bill status logic
- *   - Multi-column ORDER BY (due_date DESC, amount DESC)
- *   - Column aliasing with AS
- * 
- * Query 2: Payment status breakdown
- *   - UNION ALL set operation to combine Paid and Unpaid results
- *   - Separate SELECT statements for each payment status
- *   - Aggregate functions: COUNT, SUM, AVG
- *   - ORDER BY for sorting results
- */
-
 export async function GET() {
   try {
     const db = getDB();
     
-    // Query 1: Main bills query - INNER JOIN, Column Aliasing, ORDER BY, DISTINCT
     const billsQuery = `
       SELECT DISTINCT
           b.bill_id,
@@ -44,7 +26,7 @@ export async function GET() {
       ORDER BY b.due_date DESC
     `;
 
-    // Query 2: Payment status with Set Operations - UNION ALL
+    // use of UNION ALL
     const paymentStatusQuery = `
       SELECT 
           'Paid' AS payment_status, 

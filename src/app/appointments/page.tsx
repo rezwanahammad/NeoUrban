@@ -1,25 +1,4 @@
-/*
- * Healthcare Appointments Management Page
- *
- * Displays data from /api/appointments which executes 4 SQL queries:
- *
- * 1. Main Appointments List
- *    SQL Techniques: INNER JOIN (Citizens, Healthcare), Column aliasing,
- *    ORDER BY appointment_date DESC
- *
- * 2. Hospital Performance
- *    SQL Techniques: LEFT OUTER JOIN, GROUP BY, HAVING with COUNT filter,
- *    SUM with CASE for conditional aggregation, AVG with CASE for completion rate,
- *    Arithmetic expressions
- *
- * 3. Status Summary
- *    SQL Techniques: GROUP BY status, Subquery in SELECT for percentage,
- *    COUNT aggregate, Arithmetic expressions, ORDER BY
- *
- * 4. Recent Appointments
- *    SQL Techniques: INNER JOINs, WHERE with subquery using DATE_SUB and MAX,
- *    ORDER BY, LIMIT
- */
+
 
 "use client";
 import { useEffect, useState } from "react";
@@ -126,14 +105,13 @@ export default function AppointmentsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Medical Appointments
         </h1>
       </div>
 
-      {/* All Appointments Section - MainQuery */}
+      {/* All Appointments Section */}
       <div className="bg-white p-6 shadow-lg rounded-lg">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">
           All Medical Appointments
@@ -207,9 +185,8 @@ export default function AppointmentsPage() {
         </div>
       </div>
 
-      {/* AnalyticsQuery Results */}
       <div className="space-y-6">
-        {/*Query 1: Hospital Performance */}
+        {/*Hospital Performance */}
         <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-red-500">
           <div className="mb-4">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
@@ -272,7 +249,7 @@ export default function AppointmentsPage() {
           )}
         </div>
 
-        {/*Query 2: Status Summary */}
+        {/*Status Summary */}
         <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-blue-500">
           <div className="mb-4">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
@@ -323,7 +300,7 @@ export default function AppointmentsPage() {
           )}
         </div>
 
-        {/*Query 3: Recent Appointments */}
+        {/*Recent Appointments */}
         <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-green-500">
           <div className="mb-4">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">

@@ -1,11 +1,3 @@
-/*
- * Utilities Management Page
- *
- * Displays data from /api/utilities which executes 1 query:
- *
- * 1. All Utilities List
- *    SQL Techniques: SELECT with specific columns, ORDER BY utility_id
- */
 
 "use client";
 import { useEffect, useState } from "react";
@@ -85,7 +77,6 @@ export default function UtilitiesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Utilities</h1>
         <p className="text-gray-600">

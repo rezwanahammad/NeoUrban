@@ -1,32 +1,4 @@
-/*
- * Service Requests Management Page
- *
- * Displays data from /api/requests which executes 6 SQL queries:
- *
- * 1. Main Requests List
- *    SQL Techniques: DISTINCT, INNER JOIN (Citizens, Services), CASE statement,
- *    Multi-column ORDER BY, Column aliasing
- *
- * 2. High-Demand Citizens
- *    SQL Techniques: INNER JOIN with USING clause, WHERE with IN, GROUP BY,
- *    HAVING with COUNT filter, MAX aggregate
- *
- * 3. Status Summary with Common Table Expression
- *    SQL Techniques: WITH clause (CTE), Subquery in SELECT, GROUP BY,
- *    MIN/MAX aggregates, Arithmetic expressions (ROUND)
- *
- * 4. Category Analysis
- *    SQL Techniques: Multiple INNER JOINs, NOT IN clause, GROUP BY,
- *    HAVING with COUNT, AVG aggregate
- *
- * 5. Priority Analysis
- *    SQL Techniques: UNION set operation, Multiple SELECT statements,
- *    INNER JOIN, COUNT and AVG aggregates
- *
- * 6. Age Range Analysis
- *    SQL Techniques: BETWEEN operator, CASE for age groups, COUNT DISTINCT,
- *    Multiple INNER JOINs, GROUP BY
- */
+
 
 "use client";
 import { useEffect, useState } from "react";
@@ -174,7 +146,7 @@ export default function RequestsPage() {
         </h1>
       </div>
 
-      {/* All Requests Section - Main Query */}
+      {/* All Requests*/}
       <div className="bg-white p-6 shadow-lg rounded-lg">
         <div className="overflow-x-auto">
           <table className="min-w-full border border-gray-200">
@@ -296,9 +268,8 @@ export default function RequestsPage() {
         </div>
       </div>
 
-      {/* Analytics Query Results */}
       <div className="space-y-6">
-        {/*Query 2: Status Summary */}
+        {/*Status Summary */}
         <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-blue-500">
           <div className="mb-4">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
@@ -371,7 +342,7 @@ export default function RequestsPage() {
           )}
         </div>
 
-        {/* Priority Analysis Section */}
+        {/* Priority Analysis */}
         <div className="bg-white p-6 rounded-lg shadow-lg">
           <div className="flex items-center mb-4">
             <h2 className="text-2xl font-bold text-gray-900">
