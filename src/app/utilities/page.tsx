@@ -93,44 +93,6 @@ export default function UtilitiesPage() {
         </p>
       </div>
 
-      {/* Utilities Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {Array.from(new Set(utilities.map((u) => u.type))).map((type) => {
-          const typeUtilities = utilities.filter((u) => u.type === type);
-          return (
-            <div
-              key={type}
-              className="bg-white p-6 shadow-lg rounded-lg border border-gray-200 hover:shadow-xl transition-shadow"
-            >
-              <div className="text-center">
-                <div className="text-lg font-semibold mb-4 text-gray-700">
-                  {getTypeIcon(type)}
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{type}</h3>
-                <span
-                  className={`inline-flex px-4 py-2 text-sm font-semibold rounded-full ${getTypeColor(
-                    type
-                  )}`}
-                >
-                  {typeUtilities.length} Provider
-                  {typeUtilities.length > 1 ? "s" : ""}
-                </span>
-                <div className="mt-4 space-y-2">
-                  {typeUtilities.map((utility) => (
-                    <div
-                      key={utility.utility_id}
-                      className="text-sm text-gray-600 bg-gray-50 p-2 rounded"
-                    >
-                      {utility.provider}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
       {/* Utilities Table */}
       <div className="bg-white p-6 shadow-lg rounded-lg border border-gray-200">
         <div className="flex justify-between items-center mb-6">
@@ -206,48 +168,45 @@ export default function UtilitiesPage() {
         )}
       </div>
 
-      {/* Provider Analysis */}
-      <div className="bg-white p-6 shadow-lg rounded-lg border border-gray-200">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">
-          Provider Analysis
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from(new Set(utilities.map((u) => u.provider))).map(
-            (provider) => {
-              const providerUtilities = utilities.filter(
-                (u) => u.provider === provider
-              );
-              const uniqueTypes = new Set(providerUtilities.map((u) => u.type));
-
-              return (
-                <div
-                  key={provider}
-                  className="p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border"
-                >
-                  <h3 className="font-bold text-gray-800 mb-2">{provider}</h3>
-                  <p className="text-sm text-gray-600 mb-3">
-                    {providerUtilities.length} service
-                    {providerUtilities.length > 1 ? "s" : ""} •{" "}
-                    {uniqueTypes.size} type{uniqueTypes.size > 1 ? "s" : ""}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {Array.from(uniqueTypes).map((type) => (
-                      <span
-                        key={type}
-                        className={`inline-flex items-center px-2 py-1 text-xs rounded-full ${getTypeColor(
-                          type
-                        )}`}
-                      >
-                        {type}
-                      </span>
-                    ))}
-                  </div>
+      {/* Utilities Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {Array.from(new Set(utilities.map((u) => u.type))).map((type) => {
+          const typeUtilities = utilities.filter((u) => u.type === type);
+          return (
+            <div
+              key={type}
+              className="bg-white p-6 shadow-lg rounded-lg border border-gray-200 hover:shadow-xl transition-shadow"
+            >
+              <div className="text-center">
+                <div className="text-lg font-semibold mb-4 text-gray-700">
+                  {getTypeIcon(type)}
                 </div>
-              );
-            }
-          )}
-        </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">{type}</h3>
+                <span
+                  className={`inline-flex px-4 py-2 text-sm font-semibold rounded-full ${getTypeColor(
+                    type
+                  )}`}
+                >
+                  {typeUtilities.length} Provider
+                  {typeUtilities.length > 1 ? "s" : ""}
+                </span>
+                <div className="mt-4 space-y-2">
+                  {typeUtilities.map((utility) => (
+                    <div
+                      key={utility.utility_id}
+                      className="text-sm text-gray-600 bg-gray-50 p-2 rounded"
+                    >
+                      {utility.provider}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
+
+      
     </div>
   );
 }

@@ -144,7 +144,7 @@ export default function TicketsPage() {
       {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          🎫 Transport Tickets
+          Transport Tickets
         </h1>
         <p className="text-gray-600">SQL Query Results from Tickets API</p>
       </div>
@@ -152,11 +152,8 @@ export default function TicketsPage() {
       {/* All Tickets Section - Main Query */}
       <div className="bg-white p-6 shadow-lg rounded-lg">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">
-          🎫 All Transport Tickets (Main Query)
+          All Transport Tickets
         </h2>
-        <p className="text-sm text-gray-600 mb-4">
-          <strong>SQL Used:</strong> INNER JOIN + Window Functions
-        </p>
 
         <div className="overflow-x-auto">
           <table className="min-w-full border border-gray-200">
@@ -251,7 +248,7 @@ export default function TicketsPage() {
         <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-red-500">
           <div className="mb-4">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Query 1: High Spenders
+              High Spenders
             </h2>
             <p className="text-sm text-gray-600 mb-2"></p>
           </div>
@@ -295,7 +292,7 @@ export default function TicketsPage() {
         <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-blue-500">
           <div className="mb-4">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Query 2: Route Performance
+              Route Performance
             </h2>
             <p className="text-sm text-gray-600 mb-2"></p>
           </div>
@@ -347,12 +344,8 @@ export default function TicketsPage() {
         <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-green-500">
           <div className="mb-4">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Query 3: Transport Summary
+              Transport Summary
             </h2>
-            <p className="text-sm text-gray-600 mb-2">
-              <strong>SQL Used:</strong> GROUP BY + Aggregations (COUNT, SUM,
-              AVG)
-            </p>
           </div>
 
           {data?.analytics?.transportSummary &&
@@ -408,11 +401,9 @@ export default function TicketsPage() {
         <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-purple-500">
           <div className="mb-4">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              🟣 Query 4: Recent Bookings (Last 30 Days)
+            Recent Bookings
             </h2>
-            <p className="text-sm text-gray-600 mb-2">
-              <strong>SQL Used:</strong> Subquery + DATEDIFF + INNER JOIN
-            </p>
+            
           </div>
 
           {data?.analytics?.recentBookings &&

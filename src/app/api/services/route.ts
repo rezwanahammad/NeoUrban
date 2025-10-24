@@ -3,14 +3,29 @@ import { getDB } from "../../../lib/db";
 export const runtime = "nodejs";
 
 export async function GET() {
-  const query = `
-    SELECT service_id, service_name, category, provider
+  const createViewQuery = `
+    CREATE OR REPLACE VIEW ServicesView AS
+    SELECT 
+      service_id, 
+      service_name, 
+      category, 
+      provider
     FROM Services
-    ORDER BY service_id
+    ORDER BY service_id;
   `;
+
+  const selectFromViewQuery = `SELECT * FROM ServicesView`;
+
   try {
     const db = getDB();
-    const [rows] = await db.query(query);
+
+    // 1️⃣ Create or update the view (safe to run every time)
+    await db.query(createViewQuery);
+
+    // 2️⃣ Fetch data from the view
+    const [rows] = await db.query(selectFromViewQuery);
+
+    // 3️⃣ Return as JSON
     return Response.json(rows);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);

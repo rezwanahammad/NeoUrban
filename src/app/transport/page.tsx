@@ -1,24 +1,56 @@
 /*
  * Transportation Management Page
  *
- * Displays data from /api/transport which executes 1 query:
+ * Displays data from /api/transport which executes 2 queries:
  *
- * 1. All Transportation Records
- *    SQL Techniques: SELECT with specific columns, ORDER BY transport_id
+ * 1. All Transportation Systems List
+ *    SQL Techniques: SELECT with specific columns, ORDER BY capacity DESC
+ *
+ * 2. Transportation Statistics
+ *    SQL Techniques: COUNT(*), SUM(), AVG(), MAX(), MIN(), CASE WHEN aggregations
+ *    Performance: All calculations moved from frontend to SQL for efficiency
  */
 
 "use client";
 import { useEffect, useState } from "react";
 
 type Transport = {
-  transport_id: number;
+  id: number;
   type: "Bus" | "Metro" | "Train";
   route: string;
   capacity: number;
 };
 
+type TransportStats = {
+  total_systems: number;
+  total_capacity: number;
+  average_capacity: number;
+  highest_capacity: number;
+  lowest_capacity: number;
+  bus_count: number;
+  metro_count: number;
+  train_count: number;
+};
+
+type TransportData = {
+  systems: Transport[];
+  statistics: TransportStats;
+};
+
 export default function TransportPage() {
-  const [transports, setTransports] = useState<Transport[]>([]);
+  const [transportData, setTransportData] = useState<TransportData>({
+    systems: [],
+    statistics: {
+      total_systems: 0,
+      total_capacity: 0,
+      average_capacity: 0,
+      highest_capacity: 0,
+      lowest_capacity: 0,
+      bus_count: 0,
+      metro_count: 0,
+      train_count: 0,
+    },
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,8 +60,9 @@ export default function TransportPage() {
         if (res.ok) return res.json();
         throw new Error("Failed to fetch transport data");
       })
-      .then((data) => {
-        setTransports(data);
+      .then((data: TransportData) => {
+        console.log("Transport API Response:", data);
+        setTransportData(data);
         setLoading(false);
       })
       .catch((err) => {
@@ -73,6 +106,8 @@ export default function TransportPage() {
     );
   }
 
+  const { systems, statistics } = transportData;
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -91,12 +126,10 @@ export default function TransportPage() {
           <h2 className="text-xl font-bold text-gray-800">
             All Transport Systems
           </h2>
-          <span className="text-sm text-gray-500">
-            Total: {transports.length} systems
-          </span>
+
         </div>
 
-        {transports.length === 0 ? (
+        {transportData.systems.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <p className="text-lg mb-2">No transport systems found</p>
             <p className="text-sm">
@@ -126,15 +159,15 @@ export default function TransportPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {transports.map((transport, index) => (
+                {systems.map((transport, index) => (
                   <tr
-                    key={transport.transport_id}
+                    key={transport.id}
                     className={`hover:bg-gray-50 ${
                       index % 2 === 0 ? "bg-white" : "bg-gray-25"
                     }`}
                   >
                     <td className="p-4 text-sm font-medium text-gray-900">
-                      {transport.transport_id}
+                      {transport.id}
                     </td>
                     <td className="p-4 text-sm">
                       <span
@@ -168,14 +201,14 @@ export default function TransportPage() {
         )}
       </div>
 
-      {/* Summary Stats */}
+      {/* Summary Stats - Using SQL calculated values */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
             Total Systems
           </h3>
           <p className="text-2xl font-bold text-blue-600">
-            {transports.length}
+            {statistics.total_systems}
           </p>
         </div>
         <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
@@ -183,7 +216,7 @@ export default function TransportPage() {
             Bus Routes
           </h3>
           <p className="text-2xl font-bold text-blue-600">
-            {transports.filter((t) => t.type.toLowerCase() === "bus").length}
+            {statistics.bus_count}
           </p>
         </div>
         <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
@@ -191,7 +224,7 @@ export default function TransportPage() {
             Metro Lines
           </h3>
           <p className="text-2xl font-bold text-green-600">
-            {transports.filter((t) => t.type.toLowerCase() === "metro").length}
+            {statistics.metro_count}
           </p>
         </div>
         <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
@@ -199,12 +232,12 @@ export default function TransportPage() {
             Train Routes
           </h3>
           <p className="text-2xl font-bold text-purple-600">
-            {transports.filter((t) => t.type.toLowerCase() === "train").length}
+            {statistics.train_count}
           </p>
         </div>
       </div>
 
-      {/* Capacity Overview */}
+      {/* Capacity Overview - Now using SQL calculated statistics */}
       <div className="bg-white p-6 shadow-lg rounded-lg border border-gray-200">
         <h2 className="text-xl font-bold text-gray-800 mb-4">
           Capacity Overview
@@ -212,32 +245,27 @@ export default function TransportPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="text-center p-4 bg-green-50 rounded-lg">
             <p className="text-2xl font-bold text-green-600">
-              {transports
-                .reduce((sum, t) => sum + t.capacity, 0)
-                .toLocaleString()}
+              {statistics.total_capacity.toLocaleString()}
             </p>
             <p className="text-sm text-gray-600">Total Capacity</p>
           </div>
           <div className="text-center p-4 bg-blue-50 rounded-lg">
             <p className="text-2xl font-bold text-blue-600">
-              {transports.length > 0
-                ? Math.round(
-                    transports.reduce((sum, t) => sum + t.capacity, 0) /
-                      transports.length
-                  ).toLocaleString()
-                : 0}
+              {Math.round(statistics.average_capacity).toLocaleString()}
             </p>
             <p className="text-sm text-gray-600">Average Capacity</p>
           </div>
           <div className="text-center p-4 bg-purple-50 rounded-lg">
             <p className="text-2xl font-bold text-purple-600">
-              {transports.length > 0
-                ? Math.max(
-                    ...transports.map((t) => t.capacity)
-                  ).toLocaleString()
-                : 0}
+              {statistics.highest_capacity.toLocaleString()}
             </p>
             <p className="text-sm text-gray-600">Highest Capacity</p>
+          </div>
+           <div className="text-center p-4 bg-purple-50 rounded-lg">
+            <p className="text-2xl font-bold text-purple-600">
+              {statistics.lowest_capacity.toLocaleString()}
+            </p>
+            <p className="text-sm text-gray-600">Lowest Capacity</p>
           </div>
         </div>
       </div>

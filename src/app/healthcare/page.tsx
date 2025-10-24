@@ -1,24 +1,50 @@
 /*
  * Healthcare Facilities Management Page
  *
- * Displays data from /api/healthcare which executes 1 query:
+ * Displays data from /api/healthcare which executes 2 queries:
  *
  * 1. All Healthcare Facilities List
- *    SQL Techniques: SELECT with specific columns, ORDER BY hospital_id
+ *    SQL Techniques: SELECT with specific columns, ORDER BY capacity DESC
+ *
+ * 2. Healthcare Capacity Statistics
+ *    SQL Techniques: COUNT(*), SUM(), AVG(), MAX(), MIN() aggregation functions
+ *    Performance: All calculations moved from frontend to SQL for efficiency
  */
 
 "use client";
 import { useEffect, useState } from "react";
 
 type Healthcare = {
-  hospital_id: number;
+  id: number;
   name: string;
   location: string;
   capacity: number;
 };
 
+type CapacityStats = {
+  total_facilities: number;
+  total_capacity: number;
+  average_capacity: number;
+  largest_capacity: number;
+  smallest_capacity: number;
+};
+
+type HealthcareData = {
+  facilities: Healthcare[];
+  statistics: CapacityStats;
+};
+
 export default function HealthcarePage() {
-  const [healthcare, setHealthcare] = useState<Healthcare[]>([]);
+  const [healthcareData, setHealthcareData] = useState<HealthcareData>({
+    facilities: [],
+    statistics: {
+      total_facilities: 0,
+      total_capacity: 0,
+      average_capacity: 0,
+      largest_capacity: 0,
+      smallest_capacity: 0,
+    },
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,8 +54,9 @@ export default function HealthcarePage() {
         if (res.ok) return res.json();
         throw new Error("Failed to fetch healthcare data");
       })
-      .then((data) => {
-        setHealthcare(data);
+      .then((data: HealthcareData) => {
+        console.log("Healthcare API Response:", data);
+        setHealthcareData(data);
         setLoading(false);
       })
       .catch((err) => {
@@ -47,15 +74,12 @@ export default function HealthcarePage() {
   };
 
   const getCapacityBar = (capacity: number) => {
-    const maxCapacity =
-      healthcare.length > 0
-        ? Math.max(...healthcare.map((h) => h.capacity))
-        : 1;
+    const maxCapacity = healthcareData.statistics.largest_capacity || 1;
     const percentage = (capacity / maxCapacity) * 100;
     return (
       <div className="w-full bg-gray-200 rounded-full h-2">
         <div
-          className={`bg-blue-600 h-2 rounded-full transition-all duration-300`}
+          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
           style={{ width: `${Math.min(percentage, 100)}%` }}
         ></div>
       </div>
@@ -78,6 +102,8 @@ export default function HealthcarePage() {
     );
   }
 
+  const { facilities, statistics } = healthcareData;
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -94,12 +120,9 @@ export default function HealthcarePage() {
           <h2 className="text-xl font-bold text-gray-800">
             Healthcare Facilities
           </h2>
-          <span className="text-sm text-gray-500">
-            Total: {healthcare.length} hospitals
-          </span>
         </div>
 
-        {healthcare.length === 0 ? (
+        {facilities.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <p className="text-lg mb-2">No healthcare facilities found</p>
             <p className="text-sm">
@@ -132,15 +155,15 @@ export default function HealthcarePage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {healthcare.map((hospital, index) => (
+                {facilities.map((hospital, index) => (
                   <tr
-                    key={hospital.hospital_id}
+                    key={hospital.id}
                     className={`hover:bg-gray-50 ${
                       index % 2 === 0 ? "bg-white" : "bg-gray-25"
                     }`}
                   >
                     <td className="p-4 text-sm font-medium text-gray-900">
-                      {hospital.hospital_id}
+                      {hospital.id}
                     </td>
                     <td className="p-4 text-sm font-semibold text-gray-900">
                       {hospital.name}
@@ -178,14 +201,14 @@ export default function HealthcarePage() {
         )}
       </div>
 
-      {/* Summary Stats */}
+      {/* Summary Stats - Using SQL calculated values */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
             Total Hospitals
           </h3>
           <p className="text-2xl font-bold text-blue-600">
-            {healthcare.length}
+            {statistics.total_facilities}
           </p>
         </div>
         <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
@@ -193,7 +216,7 @@ export default function HealthcarePage() {
             Large Hospitals
           </h3>
           <p className="text-2xl font-bold text-green-600">
-            {healthcare.filter((h) => h.capacity >= 300).length}
+            {facilities.filter((h) => h.capacity >= 300).length}
           </p>
         </div>
         <div className="bg-white p-4 shadow rounded-lg border border-gray-200 text-center">
@@ -202,7 +225,7 @@ export default function HealthcarePage() {
           </h3>
           <p className="text-2xl font-bold text-yellow-600">
             {
-              healthcare.filter((h) => h.capacity >= 150 && h.capacity < 300)
+              facilities.filter((h) => h.capacity >= 150 && h.capacity < 300)
                 .length
             }
           </p>
@@ -212,12 +235,12 @@ export default function HealthcarePage() {
             Small Hospitals
           </h3>
           <p className="text-2xl font-bold text-blue-600">
-            {healthcare.filter((h) => h.capacity < 150).length}
+            {facilities.filter((h) => h.capacity < 150).length}
           </p>
         </div>
       </div>
 
-      {/* Capacity Analysis */}
+      {/* Capacity Analysis - Now using SQL calculated statistics */}
       <div className="bg-white p-6 shadow-lg rounded-lg border border-gray-200">
         <h2 className="text-xl font-bold text-gray-800 mb-4">
           Capacity Analysis
@@ -225,35 +248,28 @@ export default function HealthcarePage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="text-center p-6 bg-blue-50 rounded-lg">
             <p className="text-3xl font-bold text-blue-600">
-              {healthcare
-                .reduce((sum, h) => sum + h.capacity, 0)
-                .toLocaleString()}
+              {statistics.total_capacity.toLocaleString()}
             </p>
             <p className="text-sm text-gray-600 mt-1">Total Bed Capacity</p>
-            <p className="text-xs text-gray-500 mt-2">Across all facilities</p>
           </div>
           <div className="text-center p-6 bg-green-50 rounded-lg">
             <p className="text-3xl font-bold text-green-600">
-              {healthcare.length > 0
-                ? Math.round(
-                    healthcare.reduce((sum, h) => sum + h.capacity, 0) /
-                      healthcare.length
-                  ).toLocaleString()
-                : 0}
+              {Math.round(statistics.average_capacity).toLocaleString()}
             </p>
             <p className="text-sm text-gray-600 mt-1">Average Capacity</p>
-            <p className="text-xs text-gray-500 mt-2">Per facility</p>
           </div>
           <div className="text-center p-6 bg-purple-50 rounded-lg">
             <p className="text-3xl font-bold text-purple-600">
-              {healthcare.length > 0
-                ? Math.max(
-                    ...healthcare.map((h) => h.capacity)
-                  ).toLocaleString()
-                : 0}
+              {statistics.largest_capacity.toLocaleString()}
             </p>
-            <p className="text-sm text-gray-600 mt-1">Largest Facility</p>
-            <p className="text-xs text-gray-500 mt-2">Maximum capacity</p>
+            <p className="text-sm text-gray-600 mt-1">Maximum Facility</p>
+          </div>
+
+          <div className="text-center p-6 bg-purple-50 rounded-lg">
+            <p className="text-3xl font-bold text-purple-600">
+              {statistics.smallest_capacity.toLocaleString()}
+            </p>
+            <p className="text-sm text-gray-600 mt-1">Minimum Facility</p>
           </div>
         </div>
       </div>
