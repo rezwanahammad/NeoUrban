@@ -131,17 +131,14 @@ export default function AppointmentsPage() {
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Medical Appointments
         </h1>
-        <p className="text-gray-600">SQLQuery Results from Appointments API</p>
       </div>
 
       {/* All Appointments Section - MainQuery */}
       <div className="bg-white p-6 shadow-lg rounded-lg">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">
-          All Medical Appointments (MainQuery)
+          All Medical Appointments
         </h2>
-        <p className="text-sm text-gray-600 mb-4">
-          <strong>SQL Used:</strong> INNER JOIN + Window Functions
-        </p>
+        <p className="text-sm text-gray-600 mb-4"></p>
 
         <div className="overflow-x-auto">
           <table className="min-w-full border border-gray-200">
@@ -177,7 +174,7 @@ export default function AppointmentsPage() {
                   className="hover:bg-gray-50"
                 >
                   <td className="p-3 text-sm font-medium text-gray-900">
-                    #{appointment.appointment_id}
+                    {appointment.appointment_id}
                   </td>
                   <td className="p-3 text-sm text-gray-900">
                     {appointment.citizen_name}
@@ -208,37 +205,6 @@ export default function AppointmentsPage() {
             </tbody>
           </table>
         </div>
-
-        {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-          <div className="bg-blue-50 p-4 rounded-lg text-center">
-            <p className="text-sm text-gray-600">Total Appointments</p>
-            <p className="text-2xl font-bold text-blue-600">
-              {data?.appointments?.length || 0}
-            </p>
-          </div>
-          <div className="bg-blue-50 p-4 rounded-lg text-center">
-            <p className="text-sm text-gray-600">Scheduled</p>
-            <p className="text-2xl font-bold text-blue-600">
-              {data?.appointments?.filter((a) => a.status === "Scheduled")
-                .length || 0}
-            </p>
-          </div>
-          <div className="bg-green-50 p-4 rounded-lg text-center">
-            <p className="text-sm text-gray-600">Completed</p>
-            <p className="text-2xl font-bold text-green-600">
-              {data?.appointments?.filter((a) => a.status === "Completed")
-                .length || 0}
-            </p>
-          </div>
-          <div className="bg-red-50 p-4 rounded-lg text-center">
-            <p className="text-sm text-gray-600">Cancelled</p>
-            <p className="text-2xl font-bold text-red-600">
-              {data?.appointments?.filter((a) => a.status === "Cancelled")
-                .length || 0}
-            </p>
-          </div>
-        </div>
       </div>
 
       {/* AnalyticsQuery Results */}
@@ -247,28 +213,8 @@ export default function AppointmentsPage() {
         <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-red-500">
           <div className="mb-4">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Query 1: Hospital Performance
+              Hospital Performance
             </h2>
-            <p className="text-sm text-gray-600 mb-2">
-              <strong>SQL Used:</strong> LEFT OUTER JOIN + GROUP BY +
-              Aggregations (COUNT, SUM, CASE)
-            </p>
-            <div className="bg-gray-50 p-3 rounded text-xs font-mono overflow-x-auto">
-              <code>
-                SELECT h.hospital_name, h.location, COUNT(a.appointment_id),
-                <br />
-                SUM(CASE WHEN a.status = &apos;Completed&apos; THEN 1 ELSE 0
-                END),
-                <br />
-                ROUND((SUM(CASE WHEN a.status = &apos;Completed&apos; THEN 1
-                ELSE 0 END) * 100.0 / COUNT(a.appointment_id)), 2)
-                <br />
-                FROM Hospitals h LEFT OUTER JOIN Appointments a ON h.hospital_id
-                = a.hospital_id
-                <br />
-                GROUP BY h.hospital_id, h.hospital_name, h.location
-              </code>
-            </div>
           </div>
 
           {data?.analytics?.hospitalPerformance &&
@@ -330,24 +276,8 @@ export default function AppointmentsPage() {
         <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-blue-500">
           <div className="mb-4">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              🔵Query 2: Status Summary
+              Status Summary
             </h2>
-            <p className="text-sm text-gray-600 mb-2">
-              <strong>SQL Used:</strong> GROUP BY + Aggregations (COUNT) +
-              Subquery for Percentages
-            </p>
-            <div className="bg-gray-50 p-3 rounded text-xs font-mono overflow-x-auto">
-              <code>
-                SELECT status, COUNT(*),
-                <br />
-                ROUND((COUNT(*) * 100.0 / (SELECT COUNT(*) FROM Appointments)),
-                2)
-                <br />
-                FROM Appointments
-                <br />
-                GROUP BY status
-              </code>
-            </div>
           </div>
 
           {data?.analytics?.statusSummary &&
@@ -397,31 +327,8 @@ export default function AppointmentsPage() {
         <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-green-500">
           <div className="mb-4">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Query 3: Recent Appointments (Last 30 Days)
+              Recent Appointments
             </h2>
-            <p className="text-sm text-gray-600 mb-2">
-              <strong>SQL Used:</strong> INNER JOIN + Subquery + DATEDIFF
-            </p>
-            <div className="bg-gray-50 p-3 rounded text-xs font-mono overflow-x-auto">
-              <code>
-                SELECT a.appointment_id, c.name, h.hospital_name, h.location,
-                a.doctor_name,
-                <br />
-                a.appointment_date, a.status, DATEDIFF(CURRENT_DATE,
-                a.appointment_date)
-                <br />
-                FROM Appointments a<br />
-                INNER JOIN Citizens c ON a.citizen_id = c.citizen_id
-                <br />
-                INNER JOIN Hospitals h ON a.hospital_id = h.hospital_id
-                <br />
-                WHERE a.appointment_date &gt;= (SELECT
-                DATE_SUB(MAX(appointment_date), INTERVAL 30 DAY) FROM
-                Appointments)
-                <br />
-                ORDER BY a.appointment_date DESC
-              </code>
-            </div>
           </div>
 
           {data?.analytics?.recentAppointments &&
@@ -440,9 +347,6 @@ export default function AppointmentsPage() {
                       Hospital
                     </th>
                     <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
-                      Location
-                    </th>
-                    <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
                       Doctor
                     </th>
                     <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
@@ -450,9 +354,6 @@ export default function AppointmentsPage() {
                     </th>
                     <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
                       Status
-                    </th>
-                    <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
-                      Days Ago
                     </th>
                   </tr>
                 </thead>
@@ -469,9 +370,7 @@ export default function AppointmentsPage() {
                         <td className="p-3 text-sm text-gray-900 border-b">
                           {appointment.hospital_name}
                         </td>
-                        <td className="p-3 text-sm text-gray-600 border-b">
-                          {appointment.location}
-                        </td>
+              
                         <td className="p-3 text-sm text-gray-900 border-b">
                           {appointment.doctor_name}
                         </td>
@@ -487,9 +386,7 @@ export default function AppointmentsPage() {
                             {appointment.status}
                           </span>
                         </td>
-                        <td className="p-3 text-sm text-gray-600 border-b">
-                          {appointment.days_ago} days
-                        </td>
+                       
                       </tr>
                     )
                   )}
@@ -501,113 +398,6 @@ export default function AppointmentsPage() {
               No recent appointments found
             </p>
           )}
-        </div>
-
-        {/* All Appointments Section */}
-        <div className="bg-white p-6 shadow-lg rounded-lg mt-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            All Medical Appointments (MainQuery)
-          </h2>
-          <p className="text-sm text-gray-600 mb-4">
-            <strong>SQL Used:</strong> INNER JOIN + Window Functions
-          </p>
-
-          <div className="overflow-x-auto">
-            <table className="min-w-full border border-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                    ID
-                  </th>
-                  <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                    Citizen
-                  </th>
-                  <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                    Hospital
-                  </th>
-                  <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                    Location
-                  </th>
-                  <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                    Doctor
-                  </th>
-                  <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                    Date
-                  </th>
-                  <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {data?.appointments?.map((appointment) => (
-                  <tr
-                    key={appointment.appointment_id}
-                    className="hover:bg-gray-50"
-                  >
-                    <td className="p-3 text-sm font-medium text-gray-900">
-                      #{appointment.appointment_id}
-                    </td>
-                    <td className="p-3 text-sm text-gray-900">
-                      {appointment.citizen_name}
-                    </td>
-                    <td className="p-3 text-sm text-gray-900">
-                      {appointment.hospital_name}
-                    </td>
-                    <td className="p-3 text-sm text-gray-600">
-                      {appointment.location}
-                    </td>
-                    <td className="p-3 text-sm text-gray-900">
-                      {appointment.doctor_name}
-                    </td>
-                    <td className="p-3 text-sm text-gray-900">
-                      {formatDate(appointment.appointment_date)}
-                    </td>
-                    <td className="p-3 text-sm">
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                          appointment.status
-                        )}`}
-                      >
-                        {appointment.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Summary Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-            <div className="bg-blue-50 p-4 rounded-lg text-center">
-              <p className="text-sm text-gray-600">Total Appointments</p>
-              <p className="text-2xl font-bold text-blue-600">
-                {data?.appointments?.length || 0}
-              </p>
-            </div>
-            <div className="bg-blue-50 p-4 rounded-lg text-center">
-              <p className="text-sm text-gray-600">Scheduled</p>
-              <p className="text-2xl font-bold text-blue-600">
-                {data?.appointments?.filter((a) => a.status === "Scheduled")
-                  .length || 0}
-              </p>
-            </div>
-            <div className="bg-green-50 p-4 rounded-lg text-center">
-              <p className="text-sm text-gray-600">Completed</p>
-              <p className="text-2xl font-bold text-green-600">
-                {data?.appointments?.filter((a) => a.status === "Completed")
-                  .length || 0}
-              </p>
-            </div>
-            <div className="bg-red-50 p-4 rounded-lg text-center">
-              <p className="text-sm text-gray-600">Cancelled</p>
-              <p className="text-2xl font-bold text-red-600">
-                {data?.appointments?.filter((a) => a.status === "Cancelled")
-                  .length || 0}
-              </p>
-            </div>
-          </div>
         </div>
       </div>
     </div>

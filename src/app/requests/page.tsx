@@ -149,14 +149,12 @@ export default function RequestsPage() {
       {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          📋 Service Requests
+          Service Requests
         </h1>
-        <p className="text-gray-600">SQL Query Results from Requests API</p>
       </div>
 
       {/* All Requests Section - Main Query */}
       <div className="bg-white p-6 shadow-lg rounded-lg">
-
         <div className="overflow-x-auto">
           <table className="min-w-full border border-gray-200">
             <thead className="bg-gray-50">
@@ -273,7 +271,7 @@ export default function RequestsPage() {
         <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-red-500">
           <div className="mb-4">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Query 1: High-Demand Citizens (INNER JOIN + GROUP BY + HAVING)
+              High-Demand Citizens
             </h2>
           </div>
 
@@ -324,7 +322,7 @@ export default function RequestsPage() {
         <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-blue-500">
           <div className="mb-4">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Query 2: Status Summary (VIEW + LEFT OUTER JOIN + Aggregations)
+              Status Summary
             </h2>
           </div>
 
@@ -393,7 +391,7 @@ export default function RequestsPage() {
         <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-green-500">
           <div className="mb-4">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Query 3: Category Analysis (VIEW + Subquery + GROUP BY)
+              Category Analysis
             </h2>
           </div>
 

@@ -114,9 +114,7 @@ export default function BillsPage() {
 
       {/* All Bills Section - Main Query */}
       <div className="bg-white p-6 shadow-lg rounded-lg">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">
-          All Bills (Main Query with VIEW and INNER JOIN)
-        </h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">All Bills</h2>
         <div className="overflow-x-auto">
           <table className="min-w-full border border-gray-200">
             <thead className="bg-gray-50">
@@ -233,8 +231,7 @@ export default function BillsPage() {
       <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-red-500">
         <div className="mb-4">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Query 1: High Unpaid Bills (INNER JOIN + GROUP BY + HAVING +
-            Subquery)
+            High Unpaid Bills
           </h2>
         </div>
 
@@ -300,7 +297,7 @@ export default function BillsPage() {
       <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-blue-500">
         <div className="mb-4">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Query 2: Utility Type Summary (LEFT OUTER JOIN + Aggregations)
+            Utility Type Summary
           </h2>
         </div>
 
@@ -369,8 +366,7 @@ export default function BillsPage() {
       <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-green-500">
         <div className="mb-4">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Query 3: Payment Status Analysis (Subquery + GROUP BY + Date
-            Functions)
+             Payment Status Analysis
           </h2>
         </div>
 
