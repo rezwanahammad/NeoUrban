@@ -1,5 +1,3 @@
-
-
 "use client";
 import { useEffect, useState } from "react";
 
@@ -19,7 +17,7 @@ export default function CitizensPage() {
   useEffect(() => {
     fetch("/api/citizens")
       .then((res) => res.json())
-      .then((data) => setCitizens(data));
+      .then((data) => setCitizens(data.citizens || []));
   }, []);
 
   const filteredCitizens = citizens.filter((c) =>
