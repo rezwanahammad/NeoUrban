@@ -26,13 +26,13 @@ import { useEffect, useState } from "react";
 
 type Bill = {
   bill_id: number;
-  citizen: string;
-  utility: string;
-  provider: string;
-  amount: number | string | null | undefined;
+  citizen_name: string;
+  utility_type: string;
+  utility_provider: string;
+  bill_amount: number | string | null | undefined;
   due_date: string;
   payment_status: "Paid" | "Unpaid";
-  days_overdue: number;
+  bill_status: string;
 };
 
 type BillsData = {
@@ -141,7 +141,7 @@ export default function BillsPage() {
                   Status
                 </th>
                 <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                  Days Overdue
+                  Bill Status
                 </th>
               </tr>
             </thead>
@@ -151,11 +151,17 @@ export default function BillsPage() {
                   <td className="p-3 text-sm font-medium text-gray-900">
                     #{bill.bill_id}
                   </td>
-                  <td className="p-3 text-sm text-gray-900">{bill.citizen}</td>
-                  <td className="p-3 text-sm text-gray-900">{bill.utility}</td>
-                  <td className="p-3 text-sm text-gray-600">{bill.provider}</td>
+                  <td className="p-3 text-sm text-gray-900">
+                    {bill.citizen_name}
+                  </td>
+                  <td className="p-3 text-sm text-gray-900">
+                    {bill.utility_type}
+                  </td>
+                  <td className="p-3 text-sm text-gray-600">
+                    {bill.utility_provider}
+                  </td>
                   <td className="p-3 text-sm font-bold text-green-600">
-                    {formatAmount(bill.amount)}
+                    {formatAmount(bill.bill_amount)}
                   </td>
                   <td className="p-3 text-sm text-gray-900">
                     {formatDate(bill.due_date)}
@@ -170,13 +176,17 @@ export default function BillsPage() {
                     </span>
                   </td>
                   <td className="p-3 text-sm">
-                    {bill.days_overdue > 0 ? (
-                      <span className="text-red-600 font-semibold">
-                        {bill.days_overdue} days
-                      </span>
-                    ) : (
-                      <span className="text-gray-400">-</span>
-                    )}
+                    <span
+                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        bill.bill_status === "Overdue"
+                          ? "bg-red-100 text-red-800"
+                          : bill.bill_status === "Pending"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-green-100 text-green-800"
+                      }`}
+                    >
+                      {bill.bill_status}
+                    </span>
                   </td>
                 </tr>
               ))}
@@ -213,11 +223,12 @@ export default function BillsPage() {
             <p className="text-2xl font-bold text-purple-600">
               {formatAmount(
                 data?.bills?.reduce((sum, b) => {
-                  if (b.amount == null || b.amount === undefined) return sum;
+                  if (b.bill_amount == null || b.bill_amount === undefined)
+                    return sum;
                   const amount =
-                    typeof b.amount === "string"
-                      ? parseFloat(b.amount)
-                      : b.amount;
+                    typeof b.bill_amount === "string"
+                      ? parseFloat(b.bill_amount)
+                      : b.bill_amount;
                   return sum + (isNaN(amount) ? 0 : amount);
                 }, 0) || 0
               )}
@@ -226,147 +237,11 @@ export default function BillsPage() {
         </div>
       </div>
 
-      {/* Analytics Query Results */}
-      {/* Query 1: High Unpaid Bills */}
-      <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-red-500">
-        <div className="mb-4">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            High Unpaid Bills
-          </h2>
-        </div>
-
-        {data?.analytics?.highUnpaid && data.analytics.highUnpaid.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full border border-gray-200">
-              <thead className="bg-red-50">
-                <tr>
-                  <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
-                    Citizen Name
-                  </th>
-                  <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
-                    Total Unpaid
-                  </th>
-                  <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
-                    Unpaid Count
-                  </th>
-                  <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
-                    Avg Unpaid Amount
-                  </th>
-                  <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
-                    Max Days Overdue
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.analytics.highUnpaid.map((item: any, index: number) => (
-                  <tr key={index} className="hover:bg-gray-50">
-                    <td className="p-3 text-sm text-gray-900 border-b font-medium">
-                      {item.name}
-                    </td>
-                    <td className="p-3 text-sm text-red-600 border-b font-bold">
-                      {formatAmount(item.total_unpaid)}
-                    </td>
-                    <td className="p-3 text-sm text-gray-900 border-b">
-                      {item.unpaid_count}
-                    </td>
-                    <td className="p-3 text-sm text-gray-900 border-b">
-                      {formatAmount(item.avg_unpaid_amount)}
-                    </td>
-                    <td className="p-3 text-sm text-gray-900 border-b">
-                      {item.max_days_overdue > 0 ? (
-                        <span className="text-red-600 font-semibold">
-                          {item.max_days_overdue} days
-                        </span>
-                      ) : (
-                        <span className="text-gray-500">-</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="text-gray-500 text-center py-4">
-            No high unpaid bills found
-          </p>
-        )}
-      </div>
-
-      {/* Query 2: Utility Summary */}
-      <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-blue-500">
-        <div className="mb-4">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Utility Type Summary
-          </h2>
-        </div>
-
-        {data?.analytics?.utilitySummary &&
-        data.analytics.utilitySummary.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full border border-gray-200">
-              <thead className="bg-blue-50">
-                <tr>
-                  <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
-                    Utility Type
-                  </th>
-                  <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
-                    Total Bills
-                  </th>
-                  <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
-                    Total Amount
-                  </th>
-                  <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
-                    Avg Amount
-                  </th>
-                  <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
-                    Min Amount
-                  </th>
-                  <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
-                    Max Amount
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.analytics.utilitySummary.map(
-                  (item: any, index: number) => (
-                    <tr key={index} className="hover:bg-gray-50">
-                      <td className="p-3 text-sm text-gray-900 border-b font-medium">
-                        {item.type}
-                      </td>
-                      <td className="p-3 text-sm text-gray-900 border-b">
-                        {item.total_bills}
-                      </td>
-                      <td className="p-3 text-sm text-green-600 border-b font-bold">
-                        {formatAmount(item.total_amount || 0)}
-                      </td>
-                      <td className="p-3 text-sm text-gray-900 border-b">
-                        {formatAmount(item.avg_amount || 0)}
-                      </td>
-                      <td className="p-3 text-sm text-gray-900 border-b">
-                        {formatAmount(item.min_amount || 0)}
-                      </td>
-                      <td className="p-3 text-sm text-gray-900 border-b">
-                        {formatAmount(item.max_amount || 0)}
-                      </td>
-                    </tr>
-                  )
-                )}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="text-gray-500 text-center py-4">
-            No utility summary found
-          </p>
-        )}
-      </div>
-
       {/* Query 3: Payment Status */}
       <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-green-500">
         <div className="mb-4">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-             Payment Status Analysis
+            Payment Status Analysis
           </h2>
         </div>
 

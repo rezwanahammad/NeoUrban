@@ -7,7 +7,6 @@ export async function GET() {
     const db = getDB();
     
     // Main tickets query
-    //ok
     const ticketsQuery = `
       SELECT 
     t.ticket_id,
@@ -19,16 +18,16 @@ export async function GET() {
 FROM Tickets t
 INNER JOIN Citizens c ON t.citizen_id = c.citizen_id
 INNER JOIN Transportation tr ON t.transport_id = tr.transport_id
-ORDER BY t.booking_date DESC;
+ORDER BY ticket_id;
     `;
 
-    //ok
+    //highspenders those who spent more than 100 for tickets
     const highSpendersQuery = `
       SELECT c.name, SUM(t.fare) AS total_spent, COUNT(*) AS ticket_count
       FROM Citizens c
       INNER JOIN Tickets t ON c.citizen_id = t.citizen_id
       GROUP BY c.citizen_id, c.name
-      HAVING SUM(t.fare) > 50
+      HAVING SUM(t.fare) > 100
       ORDER BY total_spent DESC
     `;
 
@@ -56,23 +55,11 @@ ORDER BY t.booking_date DESC;
       ORDER BY total_revenue DESC
     `;
 
-    // Recent bookings with subquery
-    const recentBookingsQuery = `
-      SELECT c.name, tr.type, tr.route, t.fare, t.booking_date
-      FROM Tickets t
-      INNER JOIN Citizens c ON t.citizen_id = c.citizen_id
-      INNER JOIN Transportation tr ON t.transport_id = tr.transport_id
-      WHERE t.booking_date >= (SELECT DATE_SUB(MAX(booking_date), INTERVAL 7 DAY) FROM Tickets)
-      ORDER BY t.booking_date DESC
-      LIMIT 10
-    `;
-
     // Execute all queries
     const [tickets] = await db.query(ticketsQuery);
     const [highSpenders] = await db.query(highSpendersQuery);
     const [routePerformance] = await db.query(routePerformanceQuery);
     const [transportSummary] = await db.query(transportSummaryQuery);
-    const [recentBookings] = await db.query(recentBookingsQuery);
 
     return Response.json({
       tickets,
@@ -80,7 +67,7 @@ ORDER BY t.booking_date DESC;
         highSpenders,
         routePerformance,
         transportSummary,
-        recentBookings
+        
       }
     });
     

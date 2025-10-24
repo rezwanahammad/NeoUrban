@@ -36,7 +36,7 @@ export async function GET(request: Request) {
         query = "SELECT * FROM ServiceRequests ORDER BY request_id DESC LIMIT 50";
         break;
       case "tickets":
-        query = "SELECT * FROM SupportTickets ORDER BY ticket_id DESC LIMIT 50";
+        query = "SELECT * FROM Tickets ORDER BY ticket_id DESC LIMIT 50";
         break;
       case "transport":
         query = "SELECT * FROM Transport ORDER BY transport_id DESC LIMIT 50";
@@ -104,8 +104,8 @@ export async function POST(request: Request) {
         break;
       
       case "tickets":
-        query = "INSERT INTO SupportTickets (citizen_id, issue_type, subject, description, priority, status) VALUES (?, ?, ?, ?, ?, ?)";
-        values = [data.citizen_id, data.issue_type, data.subject, data.description, data.priority, data.status];
+        query = "INSERT INTO Tickets (citizen_id, transport_id, fare, booking_date) VALUES (?, ?, ?, ?)";
+        values = [data.citizen_id, data.transport_id, data.fare, data.booking_date];
         break;
       
       case "transport":

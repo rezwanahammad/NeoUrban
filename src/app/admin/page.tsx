@@ -42,6 +42,12 @@ export default function AdminPanel() {
     due_date: "",
     payment_status: "Unpaid",
   });
+  const [ticketForm, setTicketForm] = useState({
+    citizen_id: "",
+    transport_id: "",
+    fare: "",
+    booking_date: "",
+  });
 
   const tables = [
     { id: "citizens", name: "Citizens" },
@@ -50,6 +56,7 @@ export default function AdminPanel() {
     { id: "services", name: "Services" },
     { id: "appointments", name: "Appointments" },
     { id: "bills", name: "Bills" },
+    { id: "tickets", name: "Tickets" },
   ];
 
   // Add new record
@@ -77,6 +84,9 @@ export default function AdminPanel() {
           break;
         case "bills":
           formData = billForm;
+          break;
+        case "tickets":
+          formData = ticketForm;
           break;
         default:
           formData = {};
@@ -134,6 +144,14 @@ export default function AdminPanel() {
               amount: "",
               due_date: "",
               payment_status: "Unpaid",
+            });
+            break;
+          case "tickets":
+            setTicketForm({
+              citizen_id: "",
+              transport_id: "",
+              fare: "",
+              booking_date: "",
             });
             break;
         }
@@ -456,6 +474,62 @@ export default function AdminPanel() {
               <option value="Paid">Paid</option>
               <option value="Unpaid">Unpaid</option>
             </select>
+          </div>
+        );
+
+      case "tickets":
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input
+              type="number"
+              placeholder="Citizen ID"
+              value={ticketForm.citizen_id}
+              onChange={(e) =>
+                setTicketForm((prev) => ({
+                  ...prev,
+                  citizen_id: e.target.value,
+                }))
+              }
+              className="p-3 border rounded-lg"
+              required
+            />
+            <input
+              type="number"
+              placeholder="Transport ID"
+              value={ticketForm.transport_id}
+              onChange={(e) =>
+                setTicketForm((prev) => ({
+                  ...prev,
+                  transport_id: e.target.value,
+                }))
+              }
+              className="p-3 border rounded-lg"
+              required
+            />
+            <input
+              type="number"
+              step="0.01"
+              placeholder="Fare Amount"
+              value={ticketForm.fare}
+              onChange={(e) =>
+                setTicketForm((prev) => ({ ...prev, fare: e.target.value }))
+              }
+              className="p-3 border rounded-lg"
+              required
+            />
+            <input
+              type="date"
+              placeholder="Booking Date"
+              value={ticketForm.booking_date}
+              onChange={(e) =>
+                setTicketForm((prev) => ({
+                  ...prev,
+                  booking_date: e.target.value,
+                }))
+              }
+              className="p-3 border rounded-lg"
+              required
+            />
           </div>
         );
 

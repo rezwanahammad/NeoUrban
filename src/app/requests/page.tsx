@@ -35,33 +35,52 @@ type Request = {
   request_id: number;
   citizen_name: string;
   service_name: string;
-  category: string;
-  status: string | null | undefined;
-  priority: string | null | undefined;
+  service_category: string;
+  request_status: string | null | undefined;
+  request_priority: string | null | undefined;
   request_date: string;
-  age: number;
-  gender: string;
-  days_open: number;
+  citizen_age: number;
+  citizen_gender: string;
+  status_label: string;
 };
 
 type HighDemandCitizen = {
-  name: string;
-  category: string;
+  citizen_name: string;
+  age: number;
+  gender: string;
   total_requests: number;
+  service_category: string;
+  last_request_date: string;
 };
 
 type StatusSummary = {
   status: string;
   total_requests: number;
-  avg_days_open: number;
   oldest_request: string;
   newest_request: string;
+  percentage: number;
+  avg_days_open: number;
 };
 
 type CategoryAnalysis = {
-  category: string;
+  service_category: string;
+  service_name: string;
   total_requests: number;
+  avg_citizen_age: number;
   avg_days_open: number;
+};
+
+type PriorityAnalysis = {
+  priority_level: string;
+  request_count: number;
+  avg_age: number;
+};
+
+type AgeRange = {
+  age_group: string;
+  request_count: number;
+  citizen_count: number;
+  category: string;
 };
 
 type RequestsData = {
@@ -70,6 +89,8 @@ type RequestsData = {
     highDemandCitizens: HighDemandCitizen[];
     statusSummary: StatusSummary[];
     categoryAnalysis: CategoryAnalysis[];
+    priorityAnalysis: PriorityAnalysis[];
+    ageRange: AgeRange[];
   };
 };
 
@@ -181,7 +202,7 @@ export default function RequestsPage() {
                   Date
                 </th>
                 <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                  Days Open
+                  Status Label
                 </th>
               </tr>
             </thead>
@@ -198,31 +219,41 @@ export default function RequestsPage() {
                     {request.service_name}
                   </td>
                   <td className="p-3 text-sm text-gray-600">
-                    {request.category}
+                    {request.service_category}
                   </td>
                   <td className="p-3 text-sm">
                     <span
                       className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                        request.status
+                        request.request_status
                       )}`}
                     >
-                      {request.status}
+                      {request.request_status}
                     </span>
                   </td>
                   <td className="p-3 text-sm">
                     <span
                       className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(
-                        request.priority
+                        request.request_priority
                       )}`}
                     >
-                      {request.priority}
+                      {request.request_priority}
                     </span>
                   </td>
                   <td className="p-3 text-sm text-gray-900">
                     {formatDate(request.request_date)}
                   </td>
-                  <td className="p-3 text-sm text-gray-900">
-                    {request.days_open} days
+                  <td className="p-3 text-sm">
+                    <span
+                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        request.status_label === "Done"
+                          ? "bg-green-100 text-green-800"
+                          : request.status_label === "Active"
+                          ? "bg-blue-100 text-blue-800"
+                          : "bg-yellow-100 text-yellow-800"
+                      }`}
+                    >
+                      {request.status_label}
+                    </span>
                   </td>
                 </tr>
               ))}
@@ -242,7 +273,7 @@ export default function RequestsPage() {
             <p className="text-sm text-gray-600">Completed</p>
             <p className="text-2xl font-bold text-green-600">
               {data?.requests?.filter(
-                (r) => r.status?.toLowerCase() === "completed"
+                (r) => r.request_status?.toLowerCase() === "completed"
               ).length || 0}
             </p>
           </div>
@@ -250,7 +281,7 @@ export default function RequestsPage() {
             <p className="text-sm text-gray-600">In Progress</p>
             <p className="text-2xl font-bold text-blue-600">
               {data?.requests?.filter(
-                (r) => r.status?.toLowerCase() === "in progress"
+                (r) => r.request_status?.toLowerCase() === "in progress"
               ).length || 0}
             </p>
           </div>
@@ -258,7 +289,7 @@ export default function RequestsPage() {
             <p className="text-sm text-gray-600">Pending</p>
             <p className="text-2xl font-bold text-yellow-600">
               {data?.requests?.filter(
-                (r) => r.status?.toLowerCase() === "pending"
+                (r) => r.request_status?.toLowerCase() === "pending"
               ).length || 0}
             </p>
           </div>
@@ -267,57 +298,6 @@ export default function RequestsPage() {
 
       {/* Analytics Query Results */}
       <div className="space-y-6">
-        {/*Query 1: High-Demand Citizens */}
-        <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-red-500">
-          <div className="mb-4">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              High-Demand Citizens
-            </h2>
-          </div>
-
-          {data?.analytics?.highDemandCitizens &&
-          data.analytics.highDemandCitizens.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full border border-gray-200">
-                <thead className="bg-red-50">
-                  <tr>
-                    <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
-                      Citizen Name
-                    </th>
-                    <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
-                      Service Category
-                    </th>
-                    <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
-                      Total Requests
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.analytics.highDemandCitizens.map(
-                    (item: HighDemandCitizen, index: number) => (
-                      <tr key={index} className="hover:bg-gray-50">
-                        <td className="p-3 text-sm text-gray-900 border-b font-medium">
-                          {item.name}
-                        </td>
-                        <td className="p-3 text-sm text-gray-900 border-b">
-                          {item.category}
-                        </td>
-                        <td className="p-3 text-sm text-red-600 border-b font-bold">
-                          {item.total_requests}
-                        </td>
-                      </tr>
-                    )
-                  )}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="text-gray-500 text-center py-4">
-              No high-demand citizens found
-            </p>
-          )}
-        </div>
-
         {/*Query 2: Status Summary */}
         <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-blue-500">
           <div className="mb-4">
@@ -338,14 +318,15 @@ export default function RequestsPage() {
                     <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
                       Total Requests
                     </th>
-                    <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
-                      Avg Days Open
-                    </th>
+                    
                     <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
                       Oldest Request
                     </th>
                     <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
                       Newest Request
+                    </th>
+                    <th className="p-3 text-left text-sm font-semibold text-gray-700 border-b">
+                      Percentage
                     </th>
                   </tr>
                 </thead>
@@ -365,14 +346,17 @@ export default function RequestsPage() {
                         <td className="p-3 text-sm text-gray-900 border-b font-bold">
                           {item.total_requests}
                         </td>
-                        <td className="p-3 text-sm text-gray-900 border-b">
-                          {Math.round(item.avg_days_open || 0)} days
-                        </td>
+                        
                         <td className="p-3 text-sm text-gray-900 border-b">
                           {formatDate(item.oldest_request)}
                         </td>
                         <td className="p-3 text-sm text-gray-900 border-b">
                           {formatDate(item.newest_request)}
+                        </td>
+                        <td className="p-3 text-sm border-b">
+                          <span className="inline-flex items-center px-2 py-1 text-xs font-bold text-blue-700 bg-blue-100 rounded-full">
+                            {item.percentage}%
+                          </span>
                         </td>
                       </tr>
                     )
@@ -387,37 +371,37 @@ export default function RequestsPage() {
           )}
         </div>
 
-        {/*Query 3: Category Analysis */}
-        <div className="bg-white p-6 shadow-lg rounded-lg border-l-4 border-green-500">
-          <div className="mb-4">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Category Analysis
+        {/* Priority Analysis Section */}
+        <div className="bg-white p-6 rounded-lg shadow-lg">
+          <div className="flex items-center mb-4">
+            <h2 className="text-2xl font-bold text-gray-900">
+              Priority Analysis
             </h2>
           </div>
 
-          {data?.analytics?.categoryAnalysis &&
-          data.analytics.categoryAnalysis.length > 0 ? (
+          {data?.analytics?.priorityAnalysis &&
+          data.analytics.priorityAnalysis.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {data.analytics.categoryAnalysis.map(
-                (item: CategoryAnalysis, index: number) => (
+              {data.analytics.priorityAnalysis.map(
+                (item: PriorityAnalysis, index: number) => (
                   <div
                     key={index}
-                    className="p-6 rounded-lg bg-green-50 border-2 border-green-300"
+                    className="p-6 rounded-lg bg-purple-50 border-2 border-purple-300"
                   >
                     <h3 className="text-xl font-bold text-gray-900 mb-3">
-                      {item.category}
+                      {item.priority_level}
                     </h3>
                     <div className="space-y-2">
                       <p className="text-sm text-gray-600">
-                        <span className="font-medium">Total Requests:</span>{" "}
-                        <span className="text-lg font-bold text-gray-900">
-                          {item.total_requests}
+                        <span className="font-medium">Request Count:</span>{" "}
+                        <span className="text-lg font-bold text-purple-600">
+                          {item.request_count}
                         </span>
                       </p>
                       <p className="text-sm text-gray-600">
-                        <span className="font-medium">Avg Days Open:</span>{" "}
+                        <span className="font-medium">Avg Age:</span>{" "}
                         <span className="font-semibold text-gray-900">
-                          {Math.round(item.avg_days_open || 0)} days
+                          {Math.round(item.avg_age || 0)} years
                         </span>
                       </p>
                     </div>
@@ -427,7 +411,7 @@ export default function RequestsPage() {
             </div>
           ) : (
             <p className="text-gray-500 text-center py-4">
-              No category analysis data found
+              No priority analysis data found
             </p>
           )}
         </div>
