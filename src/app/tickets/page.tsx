@@ -72,10 +72,10 @@ export default function TicketsPage() {
   }, []);
 
   const formatFare = (fare: number | string | null | undefined) => {
-    if (fare === null || fare === undefined) return "$0.00";
+    if (fare === null || fare === undefined) return "৳0.00";
     const numFare = typeof fare === "string" ? parseFloat(fare) : fare;
-    if (isNaN(numFare)) return "$0.00";
-    return `$${numFare.toFixed(2)}`;
+    if (isNaN(numFare)) return "৳0.00";
+    return `৳${numFare.toFixed(2)}`;
   };
 
   const formatDate = (dateString: string) => {

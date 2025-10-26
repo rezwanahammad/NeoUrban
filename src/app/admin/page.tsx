@@ -1,5 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
+import { AuthProvider, useAuth } from "../../lib/auth";
+import LoginForm from "../../components/LoginForm";
 
 type Citizen = {
   citizen_id: number;
@@ -10,7 +12,7 @@ type Citizen = {
   contact: string;
 };
 
-export default function AdminPanel() {
+function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("citizens");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -382,6 +384,7 @@ export default function AdminPanel() {
                 }))
               }
               className="p-3 border rounded-lg"
+              title="Emergency Services Available"
             >
               <option value="Yes">Yes</option>
               <option value="No">No</option>
@@ -579,6 +582,7 @@ export default function AdminPanel() {
             />
             <input
               type="date"
+              placeholder="Due Date"
               value={billForm.due_date}
               onChange={(e) =>
                 setBillForm((prev) => ({ ...prev, due_date: e.target.value }))
@@ -673,7 +677,6 @@ export default function AdminPanel() {
               <h1 className="text-3xl font-bold text-gray-900">Admin Panel</h1>
               <p className="text-gray-600">Manage your database records</p>
             </div>
-            <div className="text-sm text-gray-500">No login required</div>
           </div>
         </div>
       </div>
@@ -932,5 +935,60 @@ export default function AdminPanel() {
         )}
       </div>
     </div>
+  );
+}
+
+function AdminContent() {
+  const { isAuthenticated, logout } = useAuth();
+
+  if (!isAuthenticated) {
+    return <LoginForm />;
+  }
+
+  return (
+    <div>
+      {/* Header with logout */}
+      <div className="bg-white shadow-sm border-b border-gray-200 mb-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Admin Panel</h1>
+              <p className="text-sm text-gray-600">
+                NeoUrban Smart City Management
+              </p>
+            </div>
+            <button
+              onClick={logout}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            >
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                />
+              </svg>
+              Logout
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <AdminDashboard />
+    </div>
+  );
+}
+
+export default function AdminPanel() {
+  return (
+    <AuthProvider>
+      <AdminContent />
+    </AuthProvider>
   );
 }

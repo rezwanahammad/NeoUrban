@@ -1,24 +1,29 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
+import { Doughnut, Pie } from "react-chartjs-2";
 
-// Types
-type Citizen = {
+// Register Chart.js components
+ChartJS.register(ArcElement, Tooltip, Legend);
+
+// Types for dashboard data
+type DashboardStats = {
+  totalCitizens: number;
+  activeRequests: number;
+  monthlyRevenue: number;
+  transportTickets: number;
+  pendingBills: number;
+};
+
+type RecentCitizen = {
   citizen_id: number;
   name: string;
   age: number;
   gender: string;
 };
-type Ticket = {
-  ticket_id: number;
-  citizen_name: string;
-  transport_type: string;
-  route: string;
-  fare: number | string | null | undefined;
-  booking_date: string;
-};
-type Request = {
+
+type RecentRequest = {
   request_id: number;
   citizen_name: string;
   service_name: string;
@@ -27,402 +32,446 @@ type Request = {
   priority: string;
   request_date: string;
 };
-type Bill = {
-  bill_id: number;
-  citizen: string;
-  utility: string;
-  amount: number | string | null | undefined;
-  due_date: string;
-  payment_status: string;
+
+type ChartData = {
+  requestStatus: Array<{ status: string; count: number }>;
+  genderDistribution: Array<{ gender: string; count: number }>;
 };
-type RequestStatus = { status: string; count: number };
-type BillTrend = { month: string; total: number };
+
+type DashboardData = {
+  stats: DashboardStats;
+  charts: ChartData;
+  recent: {
+    citizens: RecentCitizen[];
+    requests: RecentRequest[];
+  };
+};
 
 export default function Dashboard() {
-  const [citizens, setCitizens] = useState<Citizen[]>([]);
-  const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [requests, setRequests] = useState<Request[]>([]);
-  const [bills, setBills] = useState<Bill[]>([]);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Helper function to format fare
-  const formatFare = (fare: number | string | null | undefined) => {
-    if (fare === null || fare === undefined) return "$0.00";
-    const numFare = typeof fare === "string" ? parseFloat(fare) : fare;
-    if (isNaN(numFare)) return "$0.00";
-    return `$${numFare.toFixed(2)}`;
+  // Helper function to format currency
+  const formatCurrency = (amount: number) => {
+    return `৳${new Intl.NumberFormat("en-BD").format(amount)}`;
   };
 
-  // Helper function to get request status data for chart
-  const getRequestStatusData = () => {
-    const statusCounts =
-      requests?.reduce((acc, request) => {
-        acc[request.status] = (acc[request.status] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>) || {};
-
-    return Object.entries(statusCounts).map(([status, count]) => ({
-      status,
-      count,
-    }));
+  // Chart color schemes
+  const chartColors = {
+    primary: ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#06B6D4"],
+    secondary: [
+      "#DBEAFE",
+      "#D1FAE5",
+      "#FEF3C7",
+      "#FEE2E2",
+      "#EDE9FE",
+      "#CFFAFE",
+    ],
   };
 
-  // Fetch all data
+  // Fetch dashboard data
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchDashboardData = async () => {
       try {
         setLoading(true);
+        setError(null);
 
-        // Fetch citizens
-        const citizensResponse = await fetch("/api/citizens");
-        if (citizensResponse.ok) {
-          const citizensData = await citizensResponse.json();
-          setCitizens(citizensData.slice(0, 5)); // Show only 5 preview rows
+        const response = await fetch("/api/dashboard");
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch dashboard data");
         }
 
-        // Fetch tickets (when API is ready)
-        try {
-          const ticketsResponse = await fetch("/api/tickets");
-          if (ticketsResponse.ok) {
-            const ticketsData = await ticketsResponse.json();
-            setTickets(ticketsData.tickets?.slice(0, 5) || []);
-          }
-        } catch {
-          console.log("Tickets API not available yet");
-        }
-
-        // Fetch requests (when API is ready)
-        try {
-          const requestsResponse = await fetch("/api/requests");
-          if (requestsResponse.ok) {
-            const requestsData = await requestsResponse.json();
-            setRequests(requestsData.requests || []);
-          }
-        } catch {
-          console.log("Requests API not available yet");
-        }
-
-        // Fetch bills (when API is ready)
-        try {
-          const billsResponse = await fetch("/api/bills");
-          if (billsResponse.ok) {
-            const billsData = await billsResponse.json();
-            setBills(billsData.bills || []);
-          }
-        } catch {
-          console.log("Bills API not available yet");
-        }
+        const data = await response.json();
+        setDashboardData(data);
       } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred");
         console.error("Error fetching dashboard data:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
+    fetchDashboardData();
   }, []);
 
-  // Colors for charts
-  const COLORS = ["#0088FE", "#FFBB28", "#00C49F"];
+  // Chart configurations
+  const getRequestStatusChart = () => {
+    if (!dashboardData?.charts.requestStatus) return null;
+
+    const data = {
+      labels: dashboardData.charts.requestStatus.map((item) => item.status),
+      datasets: [
+        {
+          data: dashboardData.charts.requestStatus.map((item) => item.count),
+          backgroundColor: chartColors.primary,
+          borderWidth: 2,
+          borderColor: "#ffffff",
+          hoverBackgroundColor: chartColors.secondary,
+        },
+      ],
+    };
+
+    const options = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: "bottom" as const,
+          labels: {
+            padding: 20,
+            font: {
+              size: 12,
+            },
+          },
+        },
+      },
+    };
+
+    return <Doughnut data={data} options={options} />;
+  };
+
+  const getGenderDistributionChart = () => {
+    if (!dashboardData?.charts.genderDistribution) return null;
+
+    const data = {
+      labels: dashboardData.charts.genderDistribution.map(
+        (item) => item.gender
+      ),
+      datasets: [
+        {
+          data: dashboardData.charts.genderDistribution.map(
+            (item) => item.count
+          ),
+          backgroundColor: ["#F59E0B", "#10B981", "#8B5CF6"],
+          borderWidth: 0,
+          hoverBackgroundColor: ["#FBBF24", "#34D399", "#A78BFA"],
+        },
+      ],
+    };
+
+    const options = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: "right" as const,
+          labels: {
+            padding: 20,
+            font: {
+              size: 12,
+            },
+          },
+        },
+      },
+    };
+
+    return <Pie data={data} options={options} />;
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4 m-6">
+        <p className="text-red-800">Error loading dashboard: {error}</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6 bg-gray-50 min-h-screen">
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
-        <p className="text-gray-600">
-          Welcome to NeoUrban Smart City Management System
+        <h1 className="text-4xl font-bold text-gray-900 mb-2">
+          NeoUrban Dashboard
+        </h1>
+        <p className="text-lg text-gray-600">
+          Smart City Management Analytics & Insights
         </p>
       </div>
 
-      {/* Top Stats */}
-      <div className="grid grid-cols-4 gap-6">
-        <div className="bg-white p-6 shadow-lg rounded-lg border border-gray-200 text-center hover:shadow-xl transition-shadow">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Total Citizens
-          </h3>
-          {loading ? (
-            <div className="animate-pulse h-8 bg-gray-200 rounded mb-2"></div>
-          ) : (
-            <p className="text-3xl font-bold text-blue-600">
-              {citizens.length}
-            </p>
-          )}
-          <p className="text-xs text-gray-400 mt-1">Registered users</p>
+      {/* Top Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        <div className="bg-gradient-to-br from-blue-500 to-blue-700 p-6 rounded-xl text-white shadow-xl transform hover:scale-105 transition-all duration-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold opacity-90 uppercase tracking-wide mb-2">
+                Total Citizens
+              </h3>
+              <p className="text-3xl font-bold">
+                {dashboardData?.stats.totalCitizens || 0}
+              </p>
+              <p className="text-sm opacity-75 mt-1">Registered users</p>
+            </div>
+          </div>
         </div>
-        <div className="bg-white p-6 shadow-lg rounded-lg border border-gray-200 text-center hover:shadow-xl transition-shadow">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Active Requests
-          </h3>
-          {loading ? (
-            <div className="animate-pulse h-8 bg-gray-200 rounded mb-2"></div>
-          ) : (
-            <p className="text-3xl font-bold text-green-600">
-              {requests?.length || 0}
-            </p>
-          )}
-          <p className="text-xs text-gray-400 mt-1">Service requests</p>
+
+        <div className="bg-gradient-to-br from-green-500 to-green-700 p-6 rounded-xl text-white shadow-xl transform hover:scale-105 transition-all duration-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold opacity-90 uppercase tracking-wide mb-2">
+                Active Requests
+              </h3>
+              <p className="text-3xl font-bold">
+                {dashboardData?.stats.activeRequests || 0}
+              </p>
+              <p className="text-sm opacity-75 mt-1">Service requests</p>
+            </div>
+          </div>
         </div>
-        <div className="bg-white p-6 shadow-lg rounded-lg border border-gray-200 text-center hover:shadow-xl transition-shadow">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Monthly Revenue
-          </h3>
-          {loading ? (
-            <div className="animate-pulse h-8 bg-gray-200 rounded mb-2"></div>
-          ) : (
-            <p className="text-3xl font-bold text-purple-600">
-              $
-              {(
-                bills?.reduce((sum, b) => {
-                  if (b.amount === null || b.amount === undefined) return sum;
-                  const amount =
-                    typeof b.amount === "string"
-                      ? parseFloat(b.amount)
-                      : b.amount;
-                  if (isNaN(amount)) return sum;
-                  return sum + amount;
-                }, 0) || 0
-              ).toLocaleString()}
-            </p>
-          )}
-          <p className="text-xs text-gray-400 mt-1">From utilities</p>
+
+        <div className="bg-gradient-to-br from-purple-500 to-purple-700 p-6 rounded-xl text-white shadow-xl transform hover:scale-105 transition-all duration-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold opacity-90 uppercase tracking-wide mb-2">
+                Monthly Revenue
+              </h3>
+              <p className="text-3xl font-bold">
+                {formatCurrency(dashboardData?.stats.monthlyRevenue || 0)}
+              </p>
+              <p className="text-sm opacity-75 mt-1">From utilities</p>
+            </div>
+          </div>
         </div>
-        <div className="bg-white p-6 shadow-lg rounded-lg border border-gray-200 text-center hover:shadow-xl transition-shadow">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Transport Tickets
-          </h3>
-          {loading ? (
-            <div className="animate-pulse h-8 bg-gray-200 rounded mb-2"></div>
-          ) : (
-            <p className="text-3xl font-bold text-orange-600">
-              {tickets?.length || 0}
-            </p>
-          )}
-          <p className="text-xs text-gray-400 mt-1">Recent bookings</p>
+
+        <div className="bg-gradient-to-br from-orange-500 to-orange-700 p-6 rounded-xl text-white shadow-xl transform hover:scale-105 transition-all duration-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold opacity-90 uppercase tracking-wide mb-2">
+                Transport Tickets
+              </h3>
+              <p className="text-3xl font-bold">
+                {dashboardData?.stats.transportTickets || 0}
+              </p>
+              <p className="text-sm opacity-75 mt-1">Recent bookings</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-red-500 to-red-700 p-6 rounded-xl text-white shadow-xl transform hover:scale-105 transition-all duration-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold opacity-90 uppercase tracking-wide mb-2">
+                Pending Bills
+              </h3>
+              <p className="text-3xl font-bold">
+                {dashboardData?.stats.pendingBills || 0}
+              </p>
+              <p className="text-sm opacity-75 mt-1">Overdue payments</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-3 gap-6">
-        {/* Citizens Table */}
-        <div className="col-span-2 bg-white p-6 shadow-lg rounded-lg border border-gray-200">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-gray-800">Recent Citizens</h2>
-            <span className="text-sm text-gray-500">
-              Showing latest 5 entries
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {/* Request Status Chart */}
+        <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-gray-800">Request Status</h2>
+            <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+              Distribution
             </span>
           </div>
-          {loading ? (
-            <div className="flex justify-center items-center h-32">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            </div>
-          ) : (
-            <div className="overflow-hidden rounded-lg border border-gray-200">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      ID
-                    </th>
-                    <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Name
-                    </th>
-                    <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Age
-                    </th>
-                    <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Gender
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {citizens.map((c, index) => (
-                    <tr
-                      key={c.citizen_id}
-                      className={`hover:bg-gray-50 ${
-                        index % 2 === 0 ? "bg-white" : "bg-gray-25"
-                      }`}
-                    >
-                      <td className="p-3 text-sm font-medium text-gray-900">
-                        {c.citizen_id}
-                      </td>
-                      <td className="p-3 text-sm text-gray-900">{c.name}</td>
-                      <td className="p-3 text-sm text-gray-900">{c.age}</td>
-                      <td className="p-3 text-sm text-gray-900">
-                        <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            c.gender === "Male"
-                              ? "bg-blue-100 text-blue-800"
-                              : c.gender === "Female"
-                              ? "bg-pink-100 text-pink-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {c.gender}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <div className="h-64">{getRequestStatusChart()}</div>
         </div>
 
-        {/* Request Status Chart */}
-        <div className="bg-white p-6 shadow-lg rounded-lg border border-gray-200">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">
-            Request Status
-          </h2>
-          <div className="flex justify-center">
-            {loading ? (
-              <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-              </div>
-            ) : requests?.length > 0 ? (
-              <PieChart width={280} height={280}>
-                <Pie
-                  data={getRequestStatusData()}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  dataKey="count"
-                  labelLine={false}
-                  label={({ status, count }) => `${status}: ${count}`}
-                >
-                  {getRequestStatusData().map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-64 text-gray-500">
-                <p className="text-lg mb-2">No request data available</p>
-                <p className="text-sm">Request API will be added later</p>
-              </div>
-            )}
+        {/* Gender Distribution */}
+        <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-gray-800">
+              Citizen Demographics
+            </h2>
+            <span className="text-sm bg-purple-100 text-purple-700 px-3 py-1 rounded-full">
+              By Gender
+            </span>
+          </div>
+          <div className="h-64">{getGenderDistributionChart()}</div>
+        </div>
+      </div>
+
+      {/* Data Tables Section */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        {/* Recent Citizens Table */}
+        <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold text-gray-800">Recent Citizens</h2>
+            <span className="text-sm bg-green-100 text-green-700 px-3 py-1 rounded-full">
+              Latest 5 entries
+            </span>
+          </div>
+          <div className="overflow-hidden rounded-lg border border-gray-200">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                  <th className="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    ID
+                  </th>
+                  <th className="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Name
+                  </th>
+                  <th className="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Age
+                  </th>
+                  <th className="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Gender
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {dashboardData?.recent.citizens.map((citizen) => (
+                  <tr
+                    key={citizen.citizen_id}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="p-4 text-sm font-medium text-gray-900">
+                      #{citizen.citizen_id}
+                    </td>
+                    <td className="p-4 text-sm text-gray-900 font-medium">
+                      {citizen.name}
+                    </td>
+                    <td className="p-4 text-sm text-gray-600">
+                      {citizen.age} years
+                    </td>
+                    <td className="p-4 text-sm">
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          citizen.gender === "Male"
+                            ? "bg-blue-100 text-blue-800"
+                            : citizen.gender === "Female"
+                            ? "bg-pink-100 text-pink-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {citizen.gender}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Recent Requests Table */}
+        <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold text-gray-800">
+              Recent Service Requests
+            </h2>
+            <span className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-full">
+              Latest activity
+            </span>
+          </div>
+          <div className="overflow-hidden rounded-lg border border-gray-200">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                  <th className="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Citizen
+                  </th>
+                  <th className="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Service
+                  </th>
+                  <th className="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Priority
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {dashboardData?.recent.requests.map((request) => (
+                  <tr
+                    key={request.request_id}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="p-4 text-sm text-gray-900 font-medium">
+                      {request.citizen_name}
+                    </td>
+                    <td className="p-4 text-sm text-gray-600">
+                      <div>
+                        <div className="font-medium">
+                          {request.service_name}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {request.category}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4 text-sm">
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          request.status === "Completed"
+                            ? "bg-green-100 text-green-800"
+                            : request.status === "In Progress"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : request.status === "Pending"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {request.status}
+                      </span>
+                    </td>
+                    <td className="p-4 text-sm">
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          request.priority === "High"
+                            ? "bg-red-100 text-red-800"
+                            : request.priority === "Medium"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-green-100 text-green-800"
+                        }`}
+                      >
+                        {request.priority}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
 
-      {/* Tickets + Bill Trends */}
-      <div className="grid grid-cols-2 gap-6">
-        {/* Tickets Table */}
-        <div className="bg-white p-6 shadow-lg rounded-lg border border-gray-200">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-gray-800">Recent Tickets</h2>
-            <span className="text-sm text-gray-500">Transport bookings</span>
-          </div>
-          {loading ? (
-            <div className="flex justify-center items-center h-32">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            </div>
-          ) : tickets?.length > 0 ? (
-            <div className="overflow-hidden rounded-lg border border-gray-200">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      ID
-                    </th>
-                    <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Citizen
-                    </th>
-                    <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Transport
-                    </th>
-                    <th className="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Fare
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {tickets?.map((t, index) => (
-                    <tr
-                      key={t.ticket_id}
-                      className={`hover:bg-gray-50 ${
-                        index % 2 === 0 ? "bg-white" : "bg-gray-25"
-                      }`}
-                    >
-                      <td className="p-3 text-sm font-medium text-gray-900">
-                        {t.ticket_id}
-                      </td>
-                      <td className="p-3 text-sm text-gray-900">
-                        {t.citizen_name}
-                      </td>
-                      <td className="p-3 text-sm text-gray-900">
-                        {t.transport_type} - {t.route}
-                      </td>
-                      <td className="p-3 text-sm font-semibold text-green-600">
-                        {formatFare(t.fare)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-32 text-gray-500">
-              <p className="text-lg mb-2">No tickets data</p>
-              <p className="text-sm">Tickets API will be added later</p>
-            </div>
-          )}
-        </div>
-
-        {/* Recent Bills Summary */}
-        <div className="bg-white p-6 shadow-lg rounded-lg border border-gray-200">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Recent Bills</h2>
-          {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            </div>
-          ) : bills?.length > 0 ? (
-            <div className="space-y-4">
-              {bills?.slice(0, 3).map((bill) => (
-                <div
-                  key={bill.bill_id}
-                  className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
-                >
-                  <div>
-                    <p className="font-semibold text-gray-800">
-                      {bill.citizen}
-                    </p>
-                    <p className="text-sm text-gray-600">{bill.utility}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-green-600">
-                      {formatFare(bill.amount)}
-                    </p>
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full ${
-                        bill.payment_status === "Paid"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {bill.payment_status}
-                    </span>
-                  </div>
-                </div>
-              ))}
-              <div className="text-center pt-2">
-                <p className="text-sm text-gray-500">
-                  Total: {bills?.length || 0} bills
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-64 text-gray-500">
-              <p className="text-lg mb-2">No billing data available</p>
-              <p className="text-sm">Bills will appear here when available</p>
-            </div>
-          )}
-        </div>
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <a
+          href="/citizens"
+          className="bg-white p-4 rounded-lg shadow-md border border-gray-200 text-center hover:shadow-lg hover:bg-gray-50 transition-all duration-200 group"
+        >
+          <p className="text-sm font-semibold text-gray-700">Manage Citizens</p>
+        </a>
+        <a
+          href="/requests"
+          className="bg-white p-4 rounded-lg shadow-md border border-gray-200 text-center hover:shadow-lg hover:bg-gray-50 transition-all duration-200 group"
+        >
+          <p className="text-sm font-semibold text-gray-700">View Requests</p>
+        </a>
+        <a
+          href="/bills"
+          className="bg-white p-4 rounded-lg shadow-md border border-gray-200 text-center hover:shadow-lg hover:bg-gray-50 transition-all duration-200 group"
+        >
+          <p className="text-sm font-semibold text-gray-700">Billing</p>
+        </a>
+        <a
+          href="/transport"
+          className="bg-white p-4 rounded-lg shadow-md border border-gray-200 text-center hover:shadow-lg hover:bg-gray-50 transition-all duration-200 group"
+        >
+          <p className="text-sm font-semibold text-gray-700">Transport</p>
+        </a>
       </div>
     </div>
   );

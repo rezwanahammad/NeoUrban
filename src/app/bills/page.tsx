@@ -1,4 +1,3 @@
-
 "use client";
 import { useEffect, useState } from "react";
 
@@ -63,10 +62,10 @@ export default function BillsPage() {
   };
 
   const formatAmount = (amount: number | string | null | undefined) => {
-    if (amount == null || amount === undefined) return "$0.00";
+    if (amount == null || amount === undefined) return "৳0.00";
     const numAmount = typeof amount === "string" ? parseFloat(amount) : amount;
-    if (isNaN(numAmount)) return "$0.00";
-    return `$${numAmount.toFixed(2)}`;
+    if (isNaN(numAmount)) return "৳0.00";
+    return `৳${numAmount.toFixed(2)}`;
   };
 
   if (loading) {
@@ -228,45 +227,47 @@ export default function BillsPage() {
         {data?.analytics?.paymentStatus &&
         data.analytics.paymentStatus.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {data.analytics.paymentStatus.map((item: AnalyticsItem, index: number) => (
-              <div
-                key={index}
-                className={`p-6 rounded-lg ${
-                  item.payment_status === "Paid"
-                    ? "bg-green-50 border-2 border-green-300"
-                    : "bg-red-50 border-2 border-red-300"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-xl font-bold text-gray-900">
-                    {item.payment_status}
-                  </h3>
-                  <span
-                    className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
-                      item.payment_status === "Paid"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {item.bill_count} bills
-                  </span>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-sm text-gray-600">
-                    <span className="font-medium">Total Amount:</span>{" "}
-                    <span className="text-lg font-bold text-gray-900">
-                      {formatAmount(item.total_amount)}
+            {data.analytics.paymentStatus.map(
+              (item: AnalyticsItem, index: number) => (
+                <div
+                  key={index}
+                  className={`p-6 rounded-lg ${
+                    item.payment_status === "Paid"
+                      ? "bg-green-50 border-2 border-green-300"
+                      : "bg-red-50 border-2 border-red-300"
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-xl font-bold text-gray-900">
+                      {item.payment_status}
+                    </h3>
+                    <span
+                      className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
+                        item.payment_status === "Paid"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {item.bill_count} bills
                     </span>
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    <span className="font-medium">Average Amount:</span>{" "}
-                    <span className="font-semibold text-gray-900">
-                      {formatAmount(item.avg_amount)}
-                    </span>
-                  </p>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium">Total Amount:</span>{" "}
+                      <span className="text-lg font-bold text-gray-900">
+                        {formatAmount(item.total_amount)}
+                      </span>
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium">Average Amount:</span>{" "}
+                      <span className="font-semibold text-gray-900">
+                        {formatAmount(item.avg_amount)}
+                      </span>
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            )}
           </div>
         ) : (
           <p className="text-gray-500 text-center py-4">
